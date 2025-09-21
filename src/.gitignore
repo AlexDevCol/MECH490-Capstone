@@ -1,0 +1,8 @@
+# Ignore everything by default
+*
+
+# But don't ignore the robot_arm folder
+!robot_arm/
+
+# Don't ignore this .gitignore file
+!.gitignore
