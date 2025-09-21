@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: rob_description
+    relative_path: urdf/rob.urdf.xacro
+  srdf:
+    relative_path: config/rob.srdf
+  config:
+    author_name: Luis Alejandro Gonzalez
+    author_email: LuisGonzalez@todo.com
+    generated_timestamp: 1737155611
