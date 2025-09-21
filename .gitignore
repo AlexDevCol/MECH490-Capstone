@@ -1,0 +1,14 @@
+# Ignore everything by default
+*
+
+# But don't ignore the src folder
+!src/
+
+# Don't ignore this .gitignore file
+!.gitignore
+
+# Don't ignore README.md if it exists
+!README.md
+
+# Don't ignore any other important documentation files
+!*.md
