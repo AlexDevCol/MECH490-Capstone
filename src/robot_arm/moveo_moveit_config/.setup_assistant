@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: moveo_description
+    relative_path: urdf/moveo.urdf.xacro
+  srdf:
+    relative_path: config/moveo.srdf
+  config:
+    author_name: Luis Alejandro Gonzalez
+    author_email: LuisGonzalez@todo.com
+    generated_timestamp: 1737155611

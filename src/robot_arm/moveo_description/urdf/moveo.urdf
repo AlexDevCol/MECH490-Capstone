@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot name="moveo_description" >  
+
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.0365462732079447 -0.0506188103426008 0.199844889715612"
+        rpy="0 0 0" />
+      <mass
+        value="7.78538512369426" />
+      <inertia
+        ixx="0.125809436671389"
+        ixy="-2.17154321475808E-05"
+        ixz="-0.000710135774901524"
+        iyy="0.250362455885131"
+        iyz="-2.98996010937198E-05"
+        izz="0.127310826437195" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.81960784314 0.71764705882 0.54901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link1">
+    <inertial>
+      <origin
+        xyz="-3.57977936522591E-05 -4.87510083063691E-06 0.0712687687792384"
+        rpy="0 0 0" />
+      <mass
+        value="4.09871887854989" />
+      <inertia
+        ixx="0.00799058297785298"
+        ixy="1.24041065267073E-07"
+        ixz="3.93151290964323E-07"
+        iyy="0.00908418285615879"
+        iyz="-3.70320127565607E-07"
+        izz="0.006994499363074" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.27450980392 0.50980392157 0.70980392157 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="revolute">
+    <origin
+      xyz="0 -0.2425 0.017144"
+      rpy="0 0 -0.3927" />
+    <parent
+      link="base_link" />
+    <child
+      link="link1" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="10" />
+  </joint>
+  <link
+    name="link2">
+    <inertial>
+      <origin
+        xyz="-0.00181996389784646 -1.98912195225331E-05 0.0778007474155114"
+        rpy="0 0 0" />
+      <mass
+        value="1.89178197363552" />
+      <inertia
+        ixx="0.00484970489758287"
+        ixy="-1.0695114087409E-06"
+        ixz="-9.71369731067025E-06"
+        iyy="0.00497261074755014"
+        iyz="1.83373459594234E-07"
+        izz="0.00289299349274461" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.27450980392 0.50980392157 0.70980392157 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="revolute">
+    <origin
+      xyz="0 0 0.1655"
+      rpy="0 0 0" />
+    <parent
+      link="link1" />
+    <child
+      link="link2" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="10" />
+  </joint>
+  <link
+    name="link3">
+    <inertial>
+      <origin
+        xyz="-0.000357737800626479 -8.53039392533228E-05 0.037983876263002"
+        rpy="0 0 0" />
+      <mass
+        value="0.654645131485646" />
+      <inertia
+        ixx="0.00195809921094727"
+        ixy="-5.40892730724243E-09"
+        ixz="2.15013852904307E-06"
+        iyy="0.001682518955775"
+        iyz="-5.97702340707974E-07"
+        izz="0.000424251954161472" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.27450980392 0.50980392157 0.70980392157 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint3"
+    type="revolute">
+    <origin
+      xyz="0.001 0 0.22112"
+      rpy="0 0 0" />
+    <parent
+      link="link2" />
+    <child
+      link="link3" />
+    <axis
+      xyz="-1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="10" />
+  </joint>
+  <link
+    name="link4">
+    <inertial>
+      <origin
+        xyz="-0.0122132917992238 0.000384668649412917 0.0437300556678256"
+        rpy="0 0 0" />
+      <mass
+        value="0.605543805564186" />
+      <inertia
+        ixx="0.000571210604293686"
+        ixy="1.9076448362183E-07"
+        ixz="6.40654290847272E-07"
+        iyy="0.000663775745262407"
+        iyz="9.81158210207296E-06"
+        izz="0.00036088010327795" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.27450980392 0.50980392157 0.70980392157 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="revolute">
+    <origin
+      xyz="0 0 0.128"
+      rpy="0 0 0" />
+    <parent
+      link="link3" />
+    <child
+      link="link4" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="0" />
+  </joint>
+  <link
+    name="link5">
+    <inertial>
+      <origin
+        xyz="-0.000204834632392167 0.000219353957441187 0.0133717706658879"
+        rpy="0 0 0" />
+      <mass
+        value="0.190555732375089" />
+      <inertia
+        ixx="0.00011325302734996"
+        ixy="-9.01241396814471E-08"
+        ixz="2.55100859803547E-07"
+        iyy="8.24950610071023E-05"
+        iyz="-7.68070004273914E-08"
+        izz="6.24676511715371E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color rgba="0.27450980392 0.50980392157 0.70980392157 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint5"
+    type="revolute">
+    <origin
+      xyz="0 0 0.095"
+      rpy="0 0 0" />
+    <parent
+      link="link4" />
+    <child
+      link="link5" />
+    <axis
+      xyz="-1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="10" />
+  </joint>
+  <link
+    name="link_L_gear">
+    <inertial>
+      <origin
+        xyz="-0.00645264248202769 -0.00300000127587652 -0.00040665296586051"
+        rpy="0 0 0" />
+      <mass
+        value="0.00490511696862488" />
+      <inertia
+        ixx="2.24938546391034E-07"
+        ixy="-3.82579308420623E-14"
+        ixz="1.91770081830201E-08"
+        iyy="1.1349874330696E-06"
+        iyz="3.32380936704694E-14"
+        izz="9.38743770625149E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_gear.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_gear.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_L_gear"
+    type="revolute">
+    <origin
+      xyz="-0.014 0.003 0.065"
+      rpy="0 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link_L_gear" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="-1.57"
+      upper="0"
+      effort="2"
+      velocity="3" />
+    <mimic
+      joint="joint_R_gear"
+      multiplier="-1"
+      offset="0" />
+  </joint>
+  <link
+    name="link_L_arm">
+    <inertial>
+      <origin
+        xyz="0.0070059 -0.0029976 0.028309"
+        rpy="0 0 0" />
+      <mass
+        value="0.010285" />
+      <inertia
+        ixx="3.9968E-06"
+        ixy="7.4472E-11"
+        ixz="-6.0199E-07"
+        iyy="3.9268E-06"
+        iyz="4.2452E-10"
+        izz="5.528E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_arm.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_L_arm"
+    type="revolute">
+    <origin
+      xyz="-0.04 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_L_gear" />
+    <child
+      link="link_L_arm" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="1.57"
+      effort="2"
+      velocity="3" />
+    <mimic
+      joint="joint_R_gear"
+      multiplier="1"
+      offset="0" />
+  </joint>
+  <link
+    name="link_R_gear">
+    <inertial>
+      <origin
+        xyz="0.00659446332051272 -0.00300005711154022 -0.000395277117331672"
+        rpy="0 0 0" />
+      <mass
+        value="0.00478292072521564" />
+      <inertia
+        ixx="2.23616538402542E-07"
+        ixy="-2.60670774991682E-12"
+        ixz="-1.64959148751162E-08"
+        iyy="1.12805242418957E-06"
+        iyz="1.87292671760768E-12"
+        izz="9.32411824221438E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_gear.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_gear.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_R_gear"
+    type="revolute">
+    <origin
+      xyz="0.014 0.003 0.065"
+      rpy="0 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link_R_gear" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="1.57"
+      effort="2"
+      velocity="3" />
+  </joint>
+  <link
+    name="link_R_arm">
+    <inertial>
+      <origin
+        xyz="-0.00700585974111195 -0.00299756799069081 0.0283088825065366"
+        rpy="0 0 0" />
+      <mass
+        value="0.0102853843072999" />
+      <inertia
+        ixx="3.99675744189295E-06"
+        ixy="-9.47669607612818E-11"
+        ixz="6.01987071565714E-07"
+        iyy="3.92683699224934E-06"
+        iyz="4.33394967302932E-10"
+        izz="5.5280478531106E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_arm.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_R_arm"
+    type="revolute">
+    <origin
+      xyz="0.04 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="link_R_gear" />
+    <child
+      link="link_R_arm" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="-1.57"
+      upper="0"
+      effort="2"
+      velocity="3" />
+    <mimic
+      joint="joint_R_gear"
+      multiplier="-1"
+      offset="0" />
+  </joint>
+  <link
+    name="link_L_pivot">
+    <inertial>
+      <origin
+        xyz="-0.0200000000000066 -0.00299999999995595 2.43138842392909E-14"
+        rpy="0 0 0" />
+      <mass
+        value="0.0016375234480386" />
+      <inertia
+        ixx="1.0300812820286E-08"
+        ixy="6.47902242876807E-19"
+        ixz="3.57609932946386E-19"
+        iyy="3.04663146253247E-07"
+        iyz="-6.75340803985154E-23"
+        izz="3.0376148853676E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_pivot.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_L_pivot.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_L_pivot"
+    type="revolute">
+    <origin
+      xyz="-0.007 0.003 0.085"
+      rpy="0 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link_L_pivot" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="-1.57"
+      upper="0"
+      effort="2"
+      velocity="3" />
+    <mimic
+      joint="joint_R_gear"
+      multiplier="-1"
+      offset="0" />
+  </joint>
+  <link
+    name="link_R_pivot">
+    <inertial>
+      <origin
+        xyz="0.0199999999999934 -0.00300000000004405 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.00163752344803857" />
+      <inertia
+        ixx="1.03008128202857E-08"
+        ixy="6.48014739440114E-19"
+        ixz="-3.68510725834797E-23"
+        iyy="3.04663146253245E-07"
+        iyz="-3.12210916297097E-23"
+        izz="3.03761488536757E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_pivot.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.196078431372549 0.196078431372549 0.196078431372549 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://moveo_description/meshes/link_R_pivot.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_R_pivot"
+    type="revolute">
+    <origin
+      xyz="0.007 0.003 0.085"
+      rpy="0 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link_R_pivot" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="1.57"
+      effort="2"
+      velocity="3" />
+    <mimic
+      joint="joint_R_gear"
+      multiplier="1"
+      offset="0" />
+  </joint>
+</robot>

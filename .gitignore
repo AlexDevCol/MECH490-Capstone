@@ -1,8 +1,9 @@
 # Ignore everything by default
 *
 
-# But don't ignore the src folder
+# But don't ignore the src folder and its contents
 !src/
+!src/**
 
 # Don't ignore this .gitignore file
 !.gitignore
