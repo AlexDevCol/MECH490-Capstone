@@ -15,21 +15,21 @@ def generate_launch_description():
 
     # --- Package Paths ---
     # Use the correct package name for rob
-    rob_description_pkg_name = "rob_description"
-    rob_description_dir = get_package_share_directory(rob_description_pkg_name)
+    panda_description_pkg_name = "panda_description"
+    panda_description_dir = get_package_share_directory(panda_description_pkg_name)
     ros_gz_sim_pkg_share = get_package_share_directory("ros_gz_sim")
 
     # --- Declare Launch Arguments ---
     # Argument for the URDF/XACRO model file
     model_arg = DeclareLaunchArgument(
         name="model",
-        default_value=os.path.join(rob_description_dir, "urdf", "rob.urdf.xacro"),
+        default_value=os.path.join(panda_description_dir, "urdf", "panda.urdf.xacro"),
         description="Absolute path to robot urdf file"
     )
     # Argument for the robot name (used in XACRO and spawning)
     robot_name_arg = DeclareLaunchArgument(
         name="robot_name",
-        default_value="rob",
+        default_value="panda",
         description="Name for the robot and urdf argument"
     )
 
@@ -47,12 +47,12 @@ def generate_launch_description():
 
     # --- Environment Variable Setup (Using the method from the working example) ---
     # This sets GZ_SIM_RESOURCE_PATH to the parent of the package share directory
-    # e.g., /path/to/ws/install/rob_description/share
+    # e.g., /path/to/ws/install/panda_description/share
     # This is less specific but might be what worked previously.
     gazebo_resource_path = SetEnvironmentVariable(
         name="GZ_SIM_RESOURCE_PATH",
         value=[
-            str(Path(rob_description_dir).parent.resolve())
+            str(Path(panda_description_dir).parent.resolve())
         ]
     )
 

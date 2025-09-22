@@ -100,8 +100,8 @@ def generate_launch_description():
         LaunchDescription: Complete launch description for the visualization setup
     """
     # Define filenames
-    urdf_package = 'rob_description'
-    urdf_filename = 'rob.urdf.xacro'
+    urdf_package = 'panda_description'
+    urdf_filename = 'panda.urdf.xacro'
     rviz_config_filename = 'display.rviz'
  
     # Set paths to important files
