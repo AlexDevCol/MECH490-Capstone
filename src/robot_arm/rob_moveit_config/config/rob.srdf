@@ -55,6 +55,14 @@
         <joint name="joint5" value="1.43"/>
         <joint name="virtual_joint6" value="0"/> <!-- *** ADD THIS *** -->
     </group_state>
+    <group_state name="ready" group="arm">
+        <joint name="joint1" value="0.0"/>
+        <joint name="joint2" value="-1.57"/>
+        <joint name="joint3" value="-1.57"/>
+        <joint name="joint4" value="0.0"/>
+        <joint name="joint5" value="1.57"/>
+        <joint name="virtual_joint6" value="0"/> <!-- *** ADD THIS *** -->
+    </group_state>
     <group_state name="open" group="gripper">
         <joint name="joint_R_gear" value="0"/>
     </group_state>

@@ -24,8 +24,8 @@ trap 'cleanup' SIGINT SIGTERM
 echo "Launching Gazebo simulation..."
 ros2 launch rob_gazebo rob.gazebo.launch.py \
     load_controllers:=true \
-    world_file:=pick_and_place_demo.world \
-    use_camera:=true \
+    world_file:=empty.world \
+    use_camera:=false \
     use_rviz:=false \
     use_robot_state_pub:=true \
     use_sim_time:=true \
