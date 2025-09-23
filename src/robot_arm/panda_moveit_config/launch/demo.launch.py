@@ -61,7 +61,7 @@ def generate_launch_description():
     # RViz
     rviz_base = LaunchConfiguration("rviz_config")
     rviz_config = PathJoinSubstitution(
-        [FindPackageShare("moveit_resources_panda_moveit_config"), "launch", rviz_base]
+        [FindPackageShare("panda_moveit_config"), "launch", rviz_base]
     )
     rviz_node = Node(
         package="rviz2",
@@ -98,7 +98,7 @@ def generate_launch_description():
 
     # ros2_control using FakeSystem as hardware
     ros2_controllers_path = os.path.join(
-        get_package_share_directory("moveit_resources_panda_moveit_config"),
+        get_package_share_directory("panda_moveit_config"),
         "config",
         "ros2_controllers.yaml",
     )

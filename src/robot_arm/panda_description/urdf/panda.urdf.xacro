@@ -4,6 +4,22 @@
 <!-- |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                 | -->
 <!-- =================================================================================== -->
 <robot name="panda" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="robot_name" default="panda"/>
+  <xacro:arg name="use_gazebo" default="true"/>
+  <xacro:arg name="use_camera" default="false"/>
+  <xacro:arg name="add_world" default="true"/>
+  
+  <!-- World link -->
+  <xacro:if value="$(arg add_world)">
+    <link name="world"/>
+    <joint name="world_to_panda_link0" type="fixed">
+      <parent link="world"/>
+      <child link="panda_link0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
+  
     <link name="panda_link0">
         <visual>
             <geometry>
@@ -285,4 +301,18 @@
         <mimic joint="panda_finger_joint1" />
         <dynamics damping="0.3" />
     </joint>
-</robot>
+
+
+    <xacro:include filename="$(find panda_description)/urdf/control/gazebo_sim_ros2_control.urdf.xacro" />
+    <xacro:load_gazebo_sim_ros2_control_plugin
+    robot_name="$(arg robot_name)"
+    use_gazebo="$(arg use_gazebo)"/>
+    
+    <xacro:include filename="$(find panda_description)/urdf/control/panda_ros2_control.urdf.xacro" />
+    <xacro:panda_ros2_control
+    name="PandaSystem"
+    initial_positions_file="$(find panda_moveit_config)/config/initial_positions.yaml"
+    ros2_control_hardware_type="gz_ros2_control/GazeboSimSystem"
+    use_gazebo="$(arg use_gazebo)"/>
+
+ </robot>
