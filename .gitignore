@@ -2,6 +2,8 @@
 *
 
 # But don't ignore the src folder and its contents
+!assets/
+!assets/**
 !src/
 !src/**
 
