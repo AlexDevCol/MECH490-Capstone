@@ -6,6 +6,8 @@
 !assets/**
 !src/
 !src/**
+!docs/
+!docs/**
 
 # Don't ignore this .gitignore file
 !.gitignore
