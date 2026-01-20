@@ -50,24 +50,28 @@
    auto scene = std::make_shared<planning_scene::PlanningScene>(t.getRobotModel());
    RCLCPP_INFO(node->get_logger(), "Created planning scene");
  
-   // Set the initial state of the robot
-   {
-     RCLCPP_INFO(node->get_logger(), "Setting initial state");
- 
-     // Get the current state of the robot and modify it
-     auto& state = scene->getCurrentStateNonConst();
- 
-     // Set the robot arm to its "ready" position as defined in the SRDF
-     state.setToDefaultValues(state.getJointModelGroup(arm_with_gripper), "ready");
- 
-     // Create a FixedState stage to represent this initial state
-     auto fixed = std::make_unique<stages::FixedState>("initial state");
-     fixed->setState(scene);
- 
-     // Add this stage to the task
-     t.add(std::move(fixed));
-     RCLCPP_INFO(node->get_logger(), "Added initial state to task");
-   }
+  // Set the initial state of the robot
+  {
+    RCLCPP_INFO(node->get_logger(), "Setting initial state");
+
+    // Create a FixedState stage to represent the current robot state
+    auto fixed = std::make_unique<stages::FixedState>("initial state");
+    fixed->setState(scene);
+
+    // Add this stage to the task
+    t.add(std::move(fixed));
+    RCLCPP_INFO(node->get_logger(), "Added initial state to task");
+  }
+
+  // Move to ready position
+  {
+    RCLCPP_INFO(node->get_logger(), "Creating stage: Move to ready position");
+    auto stage = std::make_unique<stages::MoveTo>("move to ready", joint_interpolation);
+    stage->setGroup(arm);
+    stage->setGoal("ready");
+    t.add(std::move(stage));
+    RCLCPP_INFO(node->get_logger(), "Added move to ready position stage to task");
+  }
  
    // Stage 1: Move 0.025 meters in the positive x direction relative to the base_link frame
    {
@@ -159,31 +163,7 @@
      RCLCPP_INFO(node->get_logger(), "Added joint offset stage to task");
    }
  
-   // Stage 5: Connect the previous stages using joint interpolation
-   // This stage ensures smooth transitions between all the previous stages and from the
-   // previous stage to the final stage.
-   {
-     RCLCPP_INFO(node->get_logger(), "Creating connect stage");
  
-     // Create a vector of groups and their associated planners
-     stages::Connect::GroupPlannerVector planners = { { arm, joint_interpolation } };
- 
-     // Create a Connect stage to smoothly link the previous stages
-     auto connect = std::make_unique<stages::Connect>("connect", planners);
-     t.add(std::move(connect));
-     RCLCPP_INFO(node->get_logger(), "Added connect stage to task");
-   }
- 
-   // Set the final state of the robot
-   {
-     RCLCPP_INFO(node->get_logger(), "Setting final state");
- 
-     // The final state is the same as the initial state
-     auto fixed = std::make_unique<stages::FixedState>("final state");
-     fixed->setState(scene);
-     t.add(std::move(fixed));
-     RCLCPP_INFO(node->get_logger(), "Added final state to task");
-   }
  
    // Return the fully configured task
    RCLCPP_INFO(node->get_logger(), "Task creation completed");
