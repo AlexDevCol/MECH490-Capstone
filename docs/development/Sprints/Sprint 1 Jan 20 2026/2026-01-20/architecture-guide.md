@@ -58,7 +58,8 @@ robot_description/
 │           └── *.STL              # Robot meshes
 │
 ├── launch/
-│   └── robot_state_publisher.launch.py  # Parametric launch file
+│   ├── robot_state_publisher.launch.py  # Full parametric launch file
+│   └── display.launch.py                  # Quick display with joint GUI
 │
 └── rviz/
     └── display.rviz               # Default RViz configuration
@@ -76,7 +77,12 @@ robot_description/
 
 ### Overview
 
-The `robot_state_publisher.launch.py` file is a parametric launch file that dynamically loads any robot based on the `robot:=` argument. It uses ROS 2 launch system features to resolve paths at runtime.
+The package provides two parametric launch files that dynamically load any robot based on the `robot:=` argument:
+
+1. **`robot_state_publisher.launch.py`** - Full-featured launch file with all options
+2. **`display.launch.py`** - Simplified launch file for quick visualization with joint GUI
+
+Both use ROS 2 launch system features to resolve paths at runtime.
 
 ### Key Components
 
@@ -251,6 +257,7 @@ When URDF files use `package://robot_description/...`, ROS 2 resolves this to:
 
 ### Basic Usage
 
+**Full-featured launch (robot_state_publisher.launch.py):**
 ```bash
 # Launch with default robot (rob)
 ros2 launch robot_description robot_state_publisher.launch.py
@@ -258,6 +265,14 @@ ros2 launch robot_description robot_state_publisher.launch.py
 # Launch specific robot
 ros2 launch robot_description robot_state_publisher.launch.py robot:=panda
 ros2 launch robot_description robot_state_publisher.launch.py robot:=bb01
+```
+
+**Quick display with joint GUI (display.launch.py):**
+```bash
+# Launch any robot with simplified interface
+ros2 launch robot_description display.launch.py robot:=panda
+ros2 launch robot_description display.launch.py robot:=rob
+ros2 launch robot_description display.launch.py robot:=bb01
 ```
 
 ### With Options
@@ -392,6 +407,39 @@ source install/setup.bash
 - Ensure `robot_name` argument matches robot name in URDF
 - Default behavior: `robot_name` = `robot` argument value
 
+#### 5. "Failed to convert... using yaml rules: yaml.safe_load() failed"
+
+**Cause:** Missing `value_type=str` in `ParameterValue` when using `Command` substitution.
+
+**Solution:**
+```python
+# Incorrect (causes YAML parsing error)
+robot_description = ParameterValue(
+    Command(['xacro ', LaunchConfiguration('model')])
+)
+
+# Correct
+robot_description = ParameterValue(
+    Command(['xacro ', LaunchConfiguration('model')]),
+    value_type=str
+)
+```
+
+#### 6. "Xacro file not processing correctly"
+
+**Cause:** URDF file is plain XML, not proper xacro format.
+
+**Solution:** Ensure xacro files have:
+- `xmlns:xacro` namespace: `<robot name="robot" xmlns:xacro="http://www.ros.org/wiki/xacro">`
+- Xacro arguments: `<xacro:arg name="add_world" default="true"/>`
+- Conditional blocks: `<xacro:if value="$(arg add_world)">...</xacro:if>`
+
+#### 7. "Duplicate package names not supported"
+
+**Cause:** Multiple packages with the same name in `package.xml`.
+
+**Solution:** Ensure each package has a unique name in its `package.xml` file. Check for copy-paste errors where package names weren't updated.
+
 ### Debug Commands
 
 ```bash
@@ -442,5 +490,5 @@ python3 src/robot_arm/robot_description/launch/robot_state_publisher.launch.py
 
 ---
 
-**Last Updated:** January 20, 2026  
+**Last Updated:** January 20, 2026 (Phase 1.5 Testing Complete)  
 **Maintainer:** MECH490-Capstone Team
