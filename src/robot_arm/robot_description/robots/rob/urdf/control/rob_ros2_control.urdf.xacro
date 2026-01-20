@@ -1,0 +1,104 @@
+<?xml version="1.0"?> 
+
+<robot xmlns:xacro="https://www.ros.org/wiki/xacro" name="rob_description">
+    <xacro:macro name="rob_ros2_control" params="use_gazebo">
+
+    <xacro:property name="PI" value="3.14159"/>
+
+        <ros2_control type="system" name="RobotSystem">
+
+            <hardware>
+                <xacro:if value="${use_gazebo}">
+                    <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+                </xacro:if>
+            </hardware>
+            
+
+
+            <joint name="joint1">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="joint2">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="joint3">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="joint4">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="joint5">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">0.0</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+            
+            <joint name="virtual_joint6">
+                <command_interface name="position">
+                    <param name="min">-${PI}</param>
+                    <param name="max">${PI}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="joint_R_gear">
+                <command_interface name="position">
+                    <!-- <param name="min">-${PI/2}</param>
+                    <param name="max">0.0</param> -->
+                    <param name="min">0</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>   
+
+            <joint name="joint_L_gear">  
+                <param name="mimic">joint_R_gear</param>
+                <param name="multiplier">1</param>
+            </joint>  
+
+            <joint name="joint_L_arm">  
+                <param name="mimic">joint_R_gear</param>
+                <param name="multiplier">-1</param>
+            </joint>  
+
+            <joint name="joint_R_arm">  
+                <param name="mimic">joint_R_gear</param>
+                <param name="multiplier">-1</param>
+            </joint>  
+
+            <joint name="joint_L_pivot">  
+                <param name="mimic">joint_R_gear</param>
+                <param name="multiplier">-1</param>
+            </joint>  
+
+            <joint name="joint_R_pivot">  
+                <param name="mimic">joint_R_gear</param>
+                <param name="multiplier">1</param>
+            </joint>  
+
+        </ros2_control>
+    </xacro:macro>
+</robot>
