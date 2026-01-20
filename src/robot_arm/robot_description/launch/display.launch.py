@@ -73,7 +73,8 @@ def generate_launch_description():
         
         # Build robot description from xacro
         robot_description = ParameterValue(
-            Command(['xacro ', LaunchConfiguration('model')])
+            Command(['xacro ', LaunchConfiguration('model')]),
+            value_type=str
         )
         
         # Robot state publisher node

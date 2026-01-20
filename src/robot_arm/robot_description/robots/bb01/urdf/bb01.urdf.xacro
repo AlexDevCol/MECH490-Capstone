@@ -2,17 +2,27 @@
 <!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
-<robot
-  name="BB01_URDF">
+<robot name="bb01" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="add_world" default="true"/>
+  <xacro:arg name="robot_name" default="bb01"/>
+  <xacro:arg name="use_gazebo" default="true"/>
+  <xacro:arg name="use_camera" default="false"/>
+
+  <!-- Constants -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+
   <!-- World link (root link with no inertia to fix KDL parser warning) -->
-  <link name="world"/>
-  
-  <!-- Fixed joint connecting world to base_link -->
-  <joint name="world_to_base_link" type="fixed">
-    <parent link="world"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </joint>
+  <xacro:if value="$(arg add_world)">
+    <link name="world"/>
+    
+    <!-- Fixed joint connecting world to base_link -->
+    <joint name="world_to_base_link" type="fixed">
+      <parent link="world"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
   
   <link
     name="base_link">
@@ -107,8 +117,8 @@
     <axis
       xyz="0.0010187 -0.0029659 1" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
@@ -165,8 +175,8 @@
     <axis
       xyz="0.014776 -0.99989 -0.0029807" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
@@ -223,8 +233,8 @@
     <axis
       xyz="-0.014776 0.99989 0.0029807" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
@@ -281,8 +291,8 @@
     <axis
       xyz="0.014776 -0.99989 -0.0029807" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
@@ -339,8 +349,8 @@
     <axis
       xyz="0.010953 -0.0028189 0.99994" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
@@ -397,8 +407,8 @@
     <axis
       xyz="-0.014776 0.99989 0.0029807" />
     <limit
-      lower="0"
-      upper="0"
+      lower="${-PI/2}"
+      upper="${PI/2}"
       effort="0"
       velocity="0" />
   </joint>
