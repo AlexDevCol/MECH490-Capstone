@@ -57,11 +57,11 @@ def generate_launch_description():
             f'{robot_val}.urdf.xacro'
         )
         
-        # Build RViz config path
+        # Build RViz config path based on robot
         rviz_config_file = os.path.join(
             pkg_share,
             'rviz',
-            'display.rviz'
+            f'display_{robot_val}.rviz'
         )
         
         # Declare model argument with computed default
