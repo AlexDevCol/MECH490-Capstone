@@ -119,8 +119,8 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_2">
@@ -177,8 +177,8 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_3">
@@ -235,8 +235,8 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_4">
@@ -293,8 +293,8 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_5">
@@ -351,8 +351,8 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_6">
@@ -409,7 +409,19 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="0"
-      velocity="0" />
+      effort="10"
+      velocity="10" />
   </joint>
+
+  <!-- Include Gazebo ros2_control plugin -->
+  <xacro:include filename="$(find robot_description)/robots/bb01/urdf/control/gazebo_sim_ros2_control.urdf.xacro" />
+  <xacro:load_gazebo_sim_ros2_control_plugin
+      robot_name="$(arg robot_name)"
+      use_gazebo="$(arg use_gazebo)"/>
+
+  <!-- Include ros2_control joint interfaces -->
+  <xacro:include filename="$(find robot_description)/robots/bb01/urdf/control/bb01_ros2_control.urdf.xacro" />
+  <xacro:bb01_ros2_control
+      use_gazebo="$(arg use_gazebo)"/>
+
 </robot>

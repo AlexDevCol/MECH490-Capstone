@@ -164,72 +164,187 @@ ros2 run urdf_parser_plugin check_urdf <generated_urdf>
 
 ---
 
-## Step 3: Add ros2_control
+## Step 3: Add ros2_control Support
 
-### 3.1 Create Hardware Interface Xacro
+**Important:** ros2_control is **required for Gazebo physics simulation**, even if you don't have MoveIt configured yet. Without it, the robot will lack physics, joints won't generate transforms, and the robot may collapse in simulation.
+
+### 3.1 Required Files Structure
+
+Create the following directory structure:
+
+```
+robots/<robot>/urdf/control/
+├── gazebo_sim_ros2_control.urdf.xacro  # Gazebo plugin loader
+└── <robot>_ros2_control.urdf.xacro     # Joint interface definitions
+
+robots/<robot>/config/
+└── ros2_controllers.yaml                # Basic controller config (optional for basic physics)
+```
+
+### 3.2 Create Hardware Interface Xacro
 
 Create `urdf/control/<robot>_ros2_control.urdf.xacro`:
 
 ```xml
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="<robot>_description">
+    <xacro:macro name="<robot>_ros2_control" params="use_gazebo">
 
-  <xacro:macro name="<robot>_ros2_control" params="use_gazebo:=true">
+    <xacro:property name="PI" value="3.1415926535897931"/>
 
-    <ros2_control name="<Robot>System" type="system">
-      <xacro:if value="${use_gazebo}">
-        <hardware>
-          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-        </hardware>
-      </xacro:if>
-      <xacro:unless value="${use_gazebo}">
-        <hardware>
-          <plugin>my_robot_hardware/MyRobotHardware</plugin>
-        </hardware>
-      </xacro:unless>
+        <ros2_control type="system" name="<Robot>System">
 
-      <!-- Joint 1 -->
-      <joint name="joint1">
-        <command_interface name="position">
-          <param name="min">-1.57</param>
-          <param name="max">1.57</param>
-        </command_interface>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
+            <hardware>
+                <xacro:if value="${use_gazebo}">
+                    <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+                </xacro:if>
+            </hardware>
 
-      <!-- Add more joints... -->
+            <!-- Define interface for each joint -->
+            <joint name="joint_1">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
 
-    </ros2_control>
+            <joint name="joint_2">
+                <command_interface name="position">
+                    <param name="min">-${PI/2}</param>
+                    <param name="max">${PI/2}</param>
+                </command_interface>
+                <state_interface name="position"/>
+            </joint>
 
-  </xacro:macro>
+            <!-- Add interfaces for all remaining joints... -->
 
+        </ros2_control>
+    </xacro:macro>
 </robot>
 ```
 
-### 3.2 Create Gazebo Plugin Xacro
+**Key Points:**
+- **Hardware plugin:** `gz_ros2_control/GazeboSimSystem` enables Gazebo simulation
+- **Command interface:** `position` allows sending position commands to joints
+- **State interface:** `position` (and optionally `velocity`) provides joint state feedback
+- **Joint limits:** Should match the limits defined in your URDF joints
+- **All joints must be listed:** Every joint that needs physics must have an interface
+
+**Example:** See `robot_description/robots/bb01/urdf/control/bb01_ros2_control.urdf.xacro` for a complete 6-DOF example.
+
+### 3.3 Create Gazebo Plugin Xacro
 
 Create `urdf/control/gazebo_sim_ros2_control.urdf.xacro`:
 
+**Option A: With MoveIt Config (when MoveIt is available)**
+
 ```xml
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:macro name="load_gazebo_sim_ros2_control_plugin" params="robot_name use_gazebo">
+        <xacro:if value="${use_gazebo}">
+            <gazebo>
+                <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+                    <parameters>$(find <robot>_moveit_config)/config/ros2_controllers.yaml</parameters>
+                    <ros>
+                        <remapping>/controller_manager/robot_description:=/robot_description</remapping>
+                    </ros>
+                </plugin>
+            </gazebo>
+        </xacro:if>
+    </xacro:macro>
+</robot>
+```
 
-  <xacro:macro name="load_gazebo_sim_ros2_control_plugin" params="robot_name use_gazebo">
-    <xacro:if value="${use_gazebo}">
-      <gazebo>
-        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-          <parameters>$(find <robot>_moveit_config)/config/ros2_controllers.yaml</parameters>
-          <ros>
-            <namespace>${robot_name}</namespace>
-          </ros>
-        </plugin>
-      </gazebo>
-    </xacro:if>
-  </xacro:macro>
+**Option B: Without MoveIt Config (standalone, like BB01)**
+
+```xml
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+    <xacro:macro name="load_gazebo_sim_ros2_control_plugin" params="robot_name use_gazebo">
+        <xacro:if value="${use_gazebo}">
+            <gazebo>
+                <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+                    <parameters>$(find robot_description)/robots/<robot>/config/ros2_controllers.yaml</parameters>
+                    <ros>
+                        <remapping>/controller_manager/robot_description:=/robot_description</remapping>
+                    </ros>
+                </plugin>
+            </gazebo>
+        </xacro:if>
+    </xacro:macro>
+</robot>
+```
+
+**Example:** See `robot_description/robots/bb01/urdf/control/gazebo_sim_ros2_control.urdf.xacro` for the standalone approach.
+
+### 3.4 Create Basic Controller Config (Optional but Recommended)
+
+For basic physics simulation, create `config/ros2_controllers.yaml`:
+
+```yaml
+# Basic ros2_control controller configuration for <robot>
+# This minimal config enables physics simulation in Gazebo
+# MoveIt trajectory controllers can be added later when MoveIt config is created
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    # Joint state broadcaster publishes joint states to /joint_states topic
+    # Required for physics simulation and transform publishing
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+# Joint state broadcaster configuration
+joint_state_broadcaster:
+  ros__parameters:
+    # No specific parameters needed - it automatically discovers all joints
+    # from the ros2_control hardware interface
+```
+
+**Note:** This minimal config is sufficient for Gazebo physics. Trajectory controllers (for MoveIt) can be added later.
+
+**Example:** See `robot_description/robots/bb01/config/ros2_controllers.yaml` for a complete example.
+
+### 3.5 Update Main URDF to Include Control Files
+
+Add the following includes to your main URDF file (`<robot>.urdf.xacro`) **before the closing `</robot>` tag**:
+
+```xml
+  <!-- Include Gazebo ros2_control plugin -->
+  <xacro:include filename="$(find robot_description)/robots/<robot>/urdf/control/gazebo_sim_ros2_control.urdf.xacro" />
+  <xacro:load_gazebo_sim_ros2_control_plugin
+      robot_name="$(arg robot_name)"
+      use_gazebo="$(arg use_gazebo)"/>
+
+  <!-- Include ros2_control joint interfaces -->
+  <xacro:include filename="$(find robot_description)/robots/<robot>/urdf/control/<robot>_ros2_control.urdf.xacro" />
+  <xacro:<robot>_ros2_control
+      use_gazebo="$(arg use_gazebo)"/>
 
 </robot>
 ```
+
+**Example:** See `robot_description/robots/bb01/urdf/bb01.urdf.xacro` (lines 417-426) for the complete include pattern.
+
+### 3.6 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Robot collapses in Gazebo | Check that ros2_control is included in URDF and hardware plugin is loaded |
+| Joints don't move | Verify joint interfaces are defined correctly in `<robot>_ros2_control.urdf.xacro` |
+| No `/joint_states` published | Check controller config YAML exists and `joint_state_broadcaster` is configured |
+| Transforms not updating | Verify `joint_state_broadcaster` is running (check with `ros2 topic echo /joint_states`) |
+| Plugin not found | Ensure `gz_ros2_control-system` plugin is installed: `sudo apt install ros-humble-gz-ros2-control` |
+| Controller config not found | Verify path in `gazebo_sim_ros2_control.urdf.xacro` matches actual file location |
+
+### 3.7 Reference Examples
+
+- **BB01 (standalone, no MoveIt):** `robot_description/robots/bb01/urdf/control/` - Complete working example without MoveIt
+- **Panda (with MoveIt):** `robot_description/robots/panda/urdf/control/` - Full MoveIt integration example
+- **Rob (with MoveIt):** `robot_description/robots/rob/urdf/control/` - Another MoveIt integration example
 
 ---
 
@@ -393,15 +508,18 @@ ros2 launch <robot>_moveit_config move_group.launch.py
 - [ ] URDF/Xacro with correct mesh paths
 - [ ] All links have inertia defined
 - [ ] All joints have limits defined
-- [ ] ros2_control hardware interface added
-- [ ] MoveIt configuration generated
-- [ ] Planning groups defined
-- [ ] Kinematics solver configured
+- [ ] **ros2_control hardware interface added** (`<robot>_ros2_control.urdf.xacro`)
+- [ ] **Gazebo plugin xacro created** (`gazebo_sim_ros2_control.urdf.xacro`)
+- [ ] **Basic controller config created** (`ros2_controllers.yaml` with `joint_state_broadcaster`)
+- [ ] **Control files included in main URDF** (before closing `</robot>` tag)
+- [ ] MoveIt configuration generated (optional, can be done later)
+- [ ] Planning groups defined (MoveIt)
+- [ ] Kinematics solver configured (MoveIt)
 - [ ] Gazebo launch file created
 - [ ] Controllers configured and loading
 - [ ] Visualization tested in RViz
-- [ ] Simulation tested in Gazebo
-- [ ] Motion planning tested with MoveIt
+- [ ] **Physics simulation tested in Gazebo** (robot doesn't collapse, joints publish transforms)
+- [ ] Motion planning tested with MoveIt (optional)
 
 ---
 

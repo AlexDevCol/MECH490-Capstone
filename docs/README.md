@@ -98,6 +98,9 @@ ros2 launch panda_description display.launch.py
 - [Adding a New Robot](development/adding-new-robot.md) - Step-by-step guide for integrating new robots
 - [Parametrization Roadmap](development/parametrization-roadmap.md) - Plan for consolidating duplicate packages
 
+### ESP32
+- [ESP32 micro-ROS Integration](esp32/README.md) - ESP32 servo control with micro-ROS
+
 ### Reference
 - [Launch Arguments](reference/launch-arguments.md) - Quick reference for all launch file arguments
 
