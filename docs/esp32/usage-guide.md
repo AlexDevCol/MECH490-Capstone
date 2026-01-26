@@ -214,6 +214,69 @@ chmod +x servo_sweep.sh
 ./servo_sweep.sh
 ```
 
+## Test Interface GUI
+
+For easier testing and control, a tkinter-based GUI is available that launches both the micro-ROS agent and provides a graphical interface for servo control.
+
+### Launching the Test Interface
+
+From the workspace root:
+
+```bash
+cd ~/Capstone/MECH490-Capstone
+
+# Make script executable (first time only)
+chmod +x src/robot_arm/robot_esp32/scripts/esp32_test.sh
+
+# Run the test interface
+./src/robot_arm/robot_esp32/scripts/esp32_test.sh
+```
+
+The script will:
+1. Check for ROS 2 environment
+2. Verify serial port availability
+3. Start the micro-ROS agent on `/dev/ttyUSB0` (or specified port)
+4. Wait for initialization
+5. Launch the GUI interface
+
+### Using the GUI
+
+The GUI provides:
+
+- **Angle Slider**: Drag to select angle (0-180 degrees)
+- **Current Angle Display**: Shows the selected angle in real-time
+- **Preset Buttons**: Quick access to common angles (0°, 45°, 90°, 135°, 180°)
+- **Send Button**: Publishes the selected angle to the servo
+- **Status Indicator**: Shows connection status
+
+**Usage**:
+1. Ensure ESP32 is connected and powered on before launching
+2. Use the slider or preset buttons to select an angle
+3. Click "Send Angle" to move the servo
+4. Watch the servo move and check the status indicator
+
+### Customizing Serial Port
+
+To use a different serial port:
+
+```bash
+export ESP32_PORT=/dev/ttyACM0
+./src/robot_arm/robot_esp32/scripts/esp32_test.sh
+```
+
+Or edit the script to change the default port.
+
+### GUI Features
+
+- **Real-time angle selection**: See the angle value as you adjust the slider
+- **Visual feedback**: Status updates when commands are sent
+- **Simple interface**: Easy to use for testing and demonstrations
+- **Future extensible**: Designed to support additional test modes later
+
+### Stopping the Interface
+
+Press `Ctrl+C` in the terminal to stop both the agent and GUI. The script handles cleanup automatically.
+
 ## Monitoring and Debugging
 
 ### Monitor Topic Messages
