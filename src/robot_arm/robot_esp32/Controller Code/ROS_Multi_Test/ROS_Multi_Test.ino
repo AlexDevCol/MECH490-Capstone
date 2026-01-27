@@ -42,7 +42,6 @@ const int MAX_ANGLE = 180;
 AccelStepper stepper(AccelStepper::FULL4WIRE, IN1_PIN, IN3_PIN, IN2_PIN, IN4_PIN);
 
 // --- Position Tracking ---
-float current_position = 0.0;  // Current position in degrees
 float steps_per_degree;        // Calculated steps per output degree
 
 // --- Global Servo Object ---
@@ -76,8 +75,14 @@ void stepper_callback(const void * msgin)
   const std_msgs__msg__Int32 * msg = (const std_msgs__msg__Int32 *)msgin;
   int target_angle = msg->data;
   
-  // Call move_to_angle function
-  move_to_angle((float)target_angle);
+  // Calculate absolute target position in steps
+  long target_steps = (long)(target_angle * steps_per_degree);
+  
+  // Immediately set new target (non-blocking, allows interruption)
+  stepper.moveTo(target_steps);
+  
+  // Flash LED to indicate movement starting
+  digitalWrite(LED_PIN, HIGH);
 }
 
 // --- ROS Subscription Callback for Servo ---
@@ -112,44 +117,6 @@ void servo_callback(const void * msgin)
   digitalWrite(LED_PIN, LOW);
 }
 
-// --- Function to calculate steps from angle delta ---
-long calculate_steps(float angle_delta) {
-  // Convert angle delta to steps
-  // steps = angle_delta * (steps_per_rev * gear_ratio) / 360
-  return (long)(angle_delta * steps_per_degree);
-}
-
-// --- Function to move stepper to target angle ---
-void move_to_angle(float target_angle) {
-  // Calculate angle delta
-  float delta_angle = target_angle - current_position;
-  
-  // Calculate steps needed
-  long steps = calculate_steps(delta_angle);
-  
-  // Move stepper
-  if (steps != 0) {
-    stepper.move(steps);
-    
-    // Flash LED to indicate movement starting
-    digitalWrite(LED_PIN, HIGH);
-    
-    // Wait for movement to complete
-    while (stepper.distanceToGo() != 0) {
-      stepper.run();
-    }
-    
-    // Update current position
-    current_position = target_angle;
-    
-    // Turn off LED
-    digitalWrite(LED_PIN, LOW);
-    
-    // Provide feedback
-    Serial.print("Stepper moved to angle: ");
-    Serial.println(target_angle);
-  }
-}
 
 void setup() {
   // Initialize Serial for debugging
@@ -219,12 +186,15 @@ void setup() {
 }
 
 void loop() {
-  // Spin ROS executor to check for incoming messages
-  RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)));
+  // Check for new commands without blocking (zero timeout for maximum responsiveness)
+  RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(0)));
   
-  // Run stepper (needed for movement execution)
+  // Run stepper (CRITICAL: must be called as frequently as possible for smooth movement)
+  // This is the equivalent of the while loop in the stable version, but non-blocking
   stepper.run();
   
-  // Small delay to avoid busy looping
-  delay(1);
+  // Turn off LED when movement completes
+  if (stepper.distanceToGo() == 0 && digitalRead(LED_PIN) == HIGH) {
+    digitalWrite(LED_PIN, LOW);
+  }
 }
