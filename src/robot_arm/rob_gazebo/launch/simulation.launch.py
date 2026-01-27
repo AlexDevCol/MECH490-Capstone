@@ -46,7 +46,7 @@ ROBOT_CONFIGS = {
     },
     'bb01': {
         'description_package': 'robot_description',
-        'moveit_package': None,  # No MoveIt config yet
+        'moveit_package': 'bb01_moveit_config',
         'default_z': '0.0',  # Spawn on ground level
     },
 }
@@ -119,7 +119,7 @@ def generate_launch_description():
 
     declare_world_cmd = DeclareLaunchArgument(
         name='world_file',
-        default_value='pick_and_place_demo.world',
+        default_value='empty.world',
         description='World file name (e.g., empty.world, house.world, pick_and_place_demo.world)'
     )
 
@@ -287,21 +287,6 @@ def configure_launch(context):
             PythonLaunchDescriptionSource([
                 os.path.join(pkg_share_moveit, 'launch', 'load_ros2_controllers.launch.py')
             ]),
-            launch_arguments={
-                'use_sim_time': use_sim_time
-            }.items(),
-            condition=IfCondition(load_controllers)
-        )
-    else:
-        # For robots without MoveIt config (e.g., bb01), use their dedicated launch file
-        # This mirrors exactly how rob loads controllers via rob_moveit_config
-        # bb01 has its own load_ros2_controllers.launch.py in robot_description
-        bb01_controllers_launch = os.path.join(
-            pkg_share_description, 'robots', 'bb01', 'launch', 'load_ros2_controllers.launch.py'
-        )
-        
-        load_controllers_cmd = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([bb01_controllers_launch]),
             launch_arguments={
                 'use_sim_time': use_sim_time
             }.items(),

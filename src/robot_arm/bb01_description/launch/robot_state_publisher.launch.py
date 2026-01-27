@@ -44,11 +44,11 @@ def process_ros2_controllers_config(context):
     # Define both source and install paths
     src_config_path = os.path.join(
         home,
-        'robot_arm/src/panda_moveit_config/config'
+        'robot_arm/src/bb01_moveit_config/config'
     )
     install_config_path = os.path.join(
         home,
-        'robot_arm/install/panda_moveit_config/share/panda_moveit_config/config'
+        'robot_arm/install/bb01_moveit_config/share/bb01_moveit_config/config'
     )
     '''
     # Read from source template
@@ -73,7 +73,7 @@ def process_ros2_controllers_config(context):
  
 # Define the arguments for the XACRO file
 ARGUMENTS = [
-    DeclareLaunchArgument('robot_name', default_value='panda',
+    DeclareLaunchArgument('robot_name', default_value='bb01',
                           description='Name of the robot'),
     DeclareLaunchArgument('add_world', default_value='true',
                           choices=['true', 'false'],

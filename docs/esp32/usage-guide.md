@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide explains how to connect the ESP32 to ROS 2, launch the micro-ROS agent, and control the servo motor manually.
+This guide explains how to connect the ESP32 to ROS 2, launch the micro-ROS agent, and control motors (servo and stepper) manually.
 
 ## Connection Workflow
 
@@ -89,6 +89,11 @@ sudo chmod 666 /dev/ttyUSB0
    [INFO] [micro_ros_agent]: New entity connected
    [INFO] [micro_ros_agent]: Node /esp32_servo_node created
    ```
+   Or for stepper:
+   ```
+   [INFO] [micro_ros_agent]: New entity connected
+   [INFO] [micro_ros_agent]: Node /esp32_stepper_node created
+   ```
 
 4. **If connection fails**:
    - Check that the agent is running
@@ -110,9 +115,13 @@ Open a **new terminal** and verify the connection:
    ros2 node list
    ```
    
-   **Expected output**:
+   **Expected output** (servo):
    ```
    /esp32_servo_node
+   ```
+   Or (stepper):
+   ```
+   /esp32_stepper_node
    ```
 
 3. **List topics**:
@@ -120,16 +129,24 @@ Open a **new terminal** and verify the connection:
    ros2 topic list
    ```
    
-   **Expected output**:
+   **Expected output** (servo):
    ```
    /parameter_events
    /rosout
    /servo_angle
    ```
+   Or (stepper):
+   ```
+   /parameter_events
+   /rosout
+   /stepper_angle
+   ```
 
 4. **Check topic info**:
    ```bash
-   ros2 topic info /servo_angle
+   ros2 topic info /servo_angle  # For servo
+   # or
+   ros2 topic info /stepper_angle  # For stepper
    ```
    
    **Expected output**:
@@ -141,7 +158,9 @@ Open a **new terminal** and verify the connection:
 
    Note: Publisher count is 0 because nothing is publishing yet. Subscription count is 1 (the ESP32).
 
-## Manual Servo Control
+## Manual Motor Control
+
+### Servo Motor Control
 
 Once connected, you can control the servo by publishing messages to the `/servo_angle` topic.
 
@@ -163,6 +182,61 @@ ros2 topic pub --once /servo_angle std_msgs/msg/Int32 'data: 40'
 - Servo moves to 40 degrees
 - LED on ESP32 flashes briefly
 - Serial Monitor shows: `Received Angle: 40 -> Setting Servo to: 40`
+
+### Stepper Motor Control
+
+Once connected, you can control the stepper motor by publishing messages to the `/stepper_angle` topic.
+
+#### Single Command (Recommended)
+
+Publish a single angle command:
+
+```bash
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 45'
+```
+
+**Explanation**:
+- `--once`: Publish once and exit
+- `/stepper_angle`: Topic name
+- `std_msgs/msg/Int32`: Message type
+- `'data: 45'`: Message data (angle in degrees, absolute position)
+
+**Expected behavior**:
+- Stepper moves to 45 degrees (from current position)
+- LED on ESP32 turns on during movement, turns off when complete
+- Position is remembered (absolute positioning)
+
+#### Multiple Commands in Sequence
+
+Test different angles:
+
+```bash
+# Move to 0 degrees
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 0'
+
+# Wait a moment, then move to 45 degrees
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 45'
+
+# Move to 90 degrees
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 90'
+
+# Return to 0 degrees
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 0'
+```
+
+**Note**: The stepper remembers its position, so each command moves relative to the current position.
+
+#### Continuous Publishing
+
+Publish continuously (useful for testing):
+
+```bash
+ros2 topic pub /stepper_angle std_msgs/msg/Int32 'data: 90'
+```
+
+This publishes the same value repeatedly. Press `Ctrl+C` to stop.
+
+**Note**: Continuous publishing sends messages at a high rate. For manual control, use `--once` instead.
 
 ### Multiple Commands in Sequence
 
@@ -284,20 +358,24 @@ Press `Ctrl+C` in the terminal to stop both the agent and GUI. The script handle
 Watch messages being published (if any):
 
 ```bash
-ros2 topic echo /servo_angle
+ros2 topic echo /servo_angle  # For servo
+# or
+ros2 topic echo /stepper_angle  # For stepper
 ```
 
-**Note**: The ESP32 subscribes to this topic, so you won't see messages here unless another node is publishing.
+**Note**: The ESP32 subscribes to these topics, so you won't see messages here unless another node is publishing.
 
 ### Check Node Status
 
 Get detailed node information:
 
 ```bash
-ros2 node info /esp32_servo_node
+ros2 node info /esp32_servo_node  # For servo
+# or
+ros2 node info /esp32_stepper_node  # For stepper
 ```
 
-**Expected output**:
+**Expected output** (servo):
 ```
 /esp32_servo_node
   Subscribers:
@@ -308,9 +386,22 @@ ros2 node info /esp32_servo_node
     ...
 ```
 
+**Expected output** (stepper):
+```
+/esp32_stepper_node
+  Subscribers:
+    /stepper_angle: std_msgs/msg/Int32
+  Publishers:
+    /rosout: rcl_interfaces/msg/Log
+  Services:
+    ...
+```
+
 ### Serial Monitor
 
-For detailed debugging, use Arduino IDE Serial Monitor:
+**Note**: Serial Monitor is only available for the servo code. The stepper code disables Serial to allow micro-ROS exclusive access to the serial port.
+
+For servo debugging:
 
 1. Open Arduino IDE
 2. `Tools` → `Serial Monitor`
@@ -318,6 +409,8 @@ For detailed debugging, use Arduino IDE Serial Monitor:
 4. Watch for:
    - `Subscribing to topic: servo_angle`
    - `Received Angle: X -> Setting Servo to: Y`
+
+For stepper debugging, use LED feedback (LED on = moving, LED off = idle) or ROS topic monitoring.
 
 ## Complete Example Session
 
@@ -345,6 +438,13 @@ sleep 1
 ros2 topic pub --once /servo_angle std_msgs/msg/Int32 'data: 90'
 sleep 1
 ros2 topic pub --once /servo_angle std_msgs/msg/Int32 'data: 180'
+
+# Or control stepper
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 0'
+sleep 2
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 45'
+sleep 2
+ros2 topic pub --once /stepper_angle std_msgs/msg/Int32 'data: 90'
 ```
 
 ## Troubleshooting
@@ -374,26 +474,35 @@ ros2 topic pub --once /servo_angle std_msgs/msg/Int32 'data: 180'
 
 ### Node Not Visible
 
-**Problem**: `ros2 node list` doesn't show `/esp32_servo_node`
+**Problem**: `ros2 node list` doesn't show `/esp32_servo_node` or `/esp32_stepper_node`
 
 **Solutions**:
 - Verify agent is running and shows connection messages
 - Check agent terminal for errors
 - Reset ESP32
 - Re-upload code to ESP32
-- Check Serial Monitor for initialization errors
+- For servo: Check Serial Monitor for initialization errors
+- For stepper: Check LED (flashing = error state)
 
-### Servo Not Moving
+### Motor Not Moving
 
-**Problem**: Commands are sent but servo doesn't move
+**Problem**: Commands are sent but motor doesn't move
 
-**Solutions**:
+**Servo Solutions**:
 - Check wiring (signal, power, ground)
 - Verify servo power supply (5V vs 3.3V)
 - Test servo with simple Arduino sketch
 - Check Serial Monitor for received messages
 - Verify angle values are valid (0-180)
 - Check if servo is damaged
+
+**Stepper Solutions**:
+- Check wiring (4-wire connection to GPIO 14-17)
+- Verify stepper driver power supply
+- Check LED feedback (should turn on during movement)
+- Verify stepper driver is working
+- Check if stepper motor is damaged
+- Ensure stepper is not stalled (too much load)
 
 ### Permission Denied
 
@@ -434,13 +543,20 @@ sudo chmod 666 /dev/ttyUSB0
 
 1. **Always launch agent first**: Start agent before connecting ESP32
 2. **Use `--once` for manual control**: Prevents flooding the topic
-3. **Monitor Serial output**: Helps debug connection issues
+3. **Monitor output**: 
+   - Servo: Use Serial Monitor for debugging
+   - Stepper: Use LED feedback (no Serial available)
 4. **Check connections**: Verify wiring before troubleshooting software
 5. **Keep agent terminal visible**: Watch for connection messages
-6. **Use valid angles**: Stick to 0-180 degrees to avoid clamping
+6. **Use valid angles**: 
+   - Servo: Stick to 0-180 degrees to avoid clamping
+   - Stepper: Any integer angle (absolute positioning)
+7. **For stepper**: Wait for movement to complete before sending next command (LED off = idle)
 
 ## Next Steps
 
-- Read the [Code Explanation](code-explanation.md) to understand the implementation
+- Read the code explanations:
+  - [Servo Code Explanation](code-explanation.md) for servo implementation
+  - [Stepper Code Explanation](stepper-code-explanation.md) for stepper implementation
 - Review the [micro-ROS Overview](micro-ros-overview.md) for architecture details
 - Integrate with other ROS 2 nodes for automated control

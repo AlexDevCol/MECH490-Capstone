@@ -81,7 +81,9 @@ Download and install from: https://www.arduino.cc/en/software
 
 2. **Restart Arduino IDE**
 
-## Step 4: Install ESP32Servo Library
+## Step 4: Install Motor Control Libraries
+
+### For Servo Motor
 
 1. **Open Arduino IDE**
 
@@ -89,6 +91,15 @@ Download and install from: https://www.arduino.cc/en/software
    - Go to `Tools` → `Manage Libraries...`
    - Search for "ESP32Servo"
    - Install "ESP32Servo" by Kevin Harrington
+
+### For Stepper Motor
+
+1. **Open Arduino IDE**
+
+2. **Install Library**:
+   - Go to `Tools` → `Manage Libraries...`
+   - Search for "AccelStepper"
+   - Install "AccelStepper" by Mike McCauley
 
 ## Step 5: Install micro-ROS Agent (Host Machine)
 
@@ -150,7 +161,8 @@ source install/setup.bash
 
 1. **Open Sketch**:
    - `File` → `Open`
-   - Navigate to: `src/robot_arm/robot_esp32/ROS_Servo_Sweep/ROS_Servo_Sweep.ino`
+   - For servo: Navigate to `src/robot_arm/robot_esp32/Controller Code/ROS_Servo_Sweep/ROS_Servo_Sweep.ino`
+   - For stepper: Navigate to `src/robot_arm/robot_esp32/Controller Code/ROS_Stepper_Control/ROS_Stepper_Control.ino`
 
 2. **Verify Code**:
    - Click the checkmark (✓) or `Sketch` → `Verify/Compile`
@@ -163,13 +175,16 @@ source install/setup.bash
    - You may need to press the BOOT button on your ESP32 during upload
 
 4. **Verify Upload**:
-   - Open Serial Monitor (`Tools` → `Serial Monitor`)
-   - Set baud rate to `115200`
-   - You should see: `Subscribing to topic: servo_angle`
+   - **For servo**: Open Serial Monitor (`Tools` → `Serial Monitor`)
+     - Set baud rate to `115200`
+     - You should see: `Subscribing to topic: servo_angle`
+   - **For stepper**: Serial Monitor is disabled (micro-ROS uses serial port)
+     - Check LED on GPIO 2 (should be off when idle)
+     - Use ROS topic commands to test
 
 ## Step 8: Hardware Connections
 
-### Servo Wiring
+### Servo Motor Wiring
 
 Connect the servo motor to the ESP32:
 
@@ -185,13 +200,34 @@ Connect the servo motor to the ESP32:
 - For 3.3V servos, can use ESP32 3.3V pin directly
 - Always connect ground (GND) between ESP32 and servo
 
+### Stepper Motor Wiring
+
+Connect the stepper motor to the ESP32 (4-wire control):
+
+| Stepper Wire | ESP32 Pin | Description |
+|--------------|-----------|-------------|
+| **Coil 1** | **GPIO 14** | Motor coil 1 (via driver if using driver board) |
+| **Coil 2** | **GPIO 15** | Motor coil 2 |
+| **Coil 3** | **GPIO 16** | Motor coil 3 |
+| **Coil 4** | **GPIO 17** | Motor coil 4 |
+| **GND** | **GND** | Ground (common) |
+| **VCC** | **External Power** | Motor power (typically 5V or 12V, check motor specs) |
+
+**Important Notes**:
+- For direct control (ULN2003 driver): Connect coils directly to GPIO pins
+- For driver boards (A4988, DRV8825, etc.): Connect STEP/DIR pins instead
+- Stepper motors typically require external power supply (not from ESP32)
+- Always connect ground (GND) between ESP32 and motor/driver
+- Check motor voltage requirements (5V, 12V, etc.)
+
 ### LED (Optional)
 
 The built-in LED on most ESP32 boards is on GPIO 2. If your board doesn't have a built-in LED:
 - Connect an LED with resistor (220Ω) to GPIO 2
 
-### Complete Wiring Diagram
+### Complete Wiring Diagrams
 
+**Servo Motor**:
 ```
 ESP32 DevKit
 ┌─────────────┐
@@ -206,14 +242,39 @@ ESP32 DevKit
 └─────────────┘
 ```
 
+**Stepper Motor (4-wire direct)**:
+```
+ESP32 DevKit
+┌─────────────┐
+│             │
+│  GPIO 14 ───┼─── Coil 1
+│  GPIO 15 ───┼─── Coil 2
+│  GPIO 16 ───┼─── Coil 3
+│  GPIO 17 ───┼─── Coil 4
+│  GND     ───┼─── Motor GND
+│             │
+│  GPIO 2  ───┼─── LED (Built-in or external)
+│             │
+│  USB    ────┼─── USB Cable to Computer
+└─────────────┘
+     │
+     └─── External Power Supply (5V/12V) to Motor VCC
+```
+
 ## Step 9: Verify Installation
 
 ### Test Serial Communication
 
+**For Servo**:
 1. **Open Serial Monitor** in Arduino IDE
 2. **Set baud rate**: 115200
 3. **Reset ESP32** (press RESET button)
 4. **Expected output**: `Subscribing to topic: servo_angle`
+
+**For Stepper**:
+- Serial Monitor is disabled (micro-ROS uses serial port exclusively)
+- Check LED on GPIO 2 (should be off when idle)
+- Use ROS topic commands to verify connection
 
 ### Test micro-ROS Agent
 
@@ -246,14 +307,23 @@ See the [Usage Guide](usage-guide.md) for detailed connection and testing instru
 **Problem**: `ESP32Servo.h` not found
 - **Solution**: Install ESP32Servo library via Library Manager
 
+**Problem**: `AccelStepper.h` not found
+- **Solution**: Install AccelStepper library via Library Manager
+
 ### Hardware Issues
 
-**Problem**: Servo doesn't move
-- **Solution**: 
+**Problem**: Motor doesn't move
+- **Servo Solutions**: 
   - Check wiring connections
   - Verify servo power supply (5V vs 3.3V)
   - Test servo with simple Arduino sketch first
   - Check if servo is working (may be damaged)
+- **Stepper Solutions**:
+  - Check wiring connections (4-wire to GPIO 14-17)
+  - Verify stepper driver power supply
+  - Check if stepper motor is working (may be damaged)
+  - Verify stepper is not stalled (too much load)
+  - Check LED feedback (should turn on during movement)
 
 **Problem**: ESP32 not detected
 - **Solution**: 
@@ -290,3 +360,4 @@ Once setup is complete:
 - [ESP32 Arduino Core Documentation](https://github.com/espressif/arduino-esp32)
 - [micro-ROS Arduino Library](https://github.com/micro-ROS/micro_ros_arduino)
 - [ESP32Servo Library](https://github.com/madhephaestus/ESP32Servo)
+- [AccelStepper Library](https://www.airspayce.com/mikem/arduino/AccelStepper/)

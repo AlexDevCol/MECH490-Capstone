@@ -33,21 +33,15 @@ if ! command -v ros2 &> /dev/null; then
     exit 1
 fi
 
-# Check if serial port exists
+# Check if serial port exists (informational only, don't block)
 if [ ! -e "$SERIAL_PORT" ]; then
-    echo "Warning: Serial port $SERIAL_PORT not found."
+    echo "Note: Serial port $SERIAL_PORT not found."
     echo "Available ports:"
     ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || echo "  (none found)"
     echo ""
-    echo "You can set the port with:"
-    echo "  export ESP32_PORT=/dev/ttyUSB0"
-    echo "  $0"
+    echo "The micro-ROS agent will attempt to connect when the port becomes available."
+    echo "You can set a different port with: export ESP32_PORT=/dev/ttyUSB0"
     echo ""
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
 fi
 
 # Check if micro-ROS agent is available

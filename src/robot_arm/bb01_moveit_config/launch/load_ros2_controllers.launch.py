@@ -14,7 +14,7 @@ Launch Sequence:
     2. Arm Controller (starts after Joint State Broadcaster)
 
 This file mirrors the structure of rob_moveit_config/launch/load_ros2_controllers.launch.py
-to ensure consistent behavior.
+but excludes the gripper controller since BB01 has no gripper.
 
 :author: MECH490-Capstone Team
 :date: January 2026
@@ -31,27 +31,26 @@ def generate_launch_description():
     Returns:
         LaunchDescription: Launch description containing sequenced controller starts
     """
-    # Start arm controller (uses ExecuteProcess like rob does)
+    # Start arm controller
     start_arm_controller_cmd = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'arm_controller'],
         output='screen')
 
-    # Launch joint state broadcaster (uses ExecuteProcess like rob does)
+    # Launch joint state broadcaster
     start_joint_state_broadcaster_cmd = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_state_broadcaster'],
         output='screen')
 
-    # Add delay to joint state broadcaster (same 10s delay as rob)
-    # This allows Gazebo and the robot spawner to initialize
+    # Add delay to joint state broadcaster (if necessary)
     delayed_start = TimerAction(
         period=10.0,
         actions=[start_joint_state_broadcaster_cmd]
     )
 
     # Register event handlers for sequencing
-    # Launch the arm controller after the joint state broadcaster exits successfully
+    # Launch the joint state broadcaster after spawning the robot
     load_arm_controller_cmd = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=start_joint_state_broadcaster_cmd,

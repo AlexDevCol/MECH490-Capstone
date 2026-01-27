@@ -3,7 +3,7 @@
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="BB01_URDF">
+  name="bb01">
   <!-- World link (root link with no inertia to fix KDL parser warning) -->
   <link name="world"/>
   
@@ -107,10 +107,10 @@
     <axis
       xyz="0.0010187 -0.0029659 1" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_2">
@@ -165,10 +165,10 @@
     <axis
       xyz="0.014776 -0.99989 -0.0029807" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_3">
@@ -223,10 +223,10 @@
     <axis
       xyz="-0.014776 0.99989 0.0029807" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_4">
@@ -281,10 +281,10 @@
     <axis
       xyz="0.014776 -0.99989 -0.0029807" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_5">
@@ -339,10 +339,10 @@
     <axis
       xyz="0.010953 -0.0028189 0.99994" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
   <link
     name="link_6">
@@ -397,9 +397,9 @@
     <axis
       xyz="-0.014776 0.99989 0.0029807" />
     <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+      lower="-1.5707963267948966"
+      upper="1.5707963267948966"
+      effort="10"
+      velocity="10" />
   </joint>
 </robot>

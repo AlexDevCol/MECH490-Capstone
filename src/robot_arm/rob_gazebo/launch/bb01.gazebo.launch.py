@@ -43,11 +43,11 @@ def generate_launch_description():
     # Constants for paths to different files and folders
     package_name_gazebo = 'rob_gazebo'
     package_name_description = 'robot_description'
-    package_name_moveit = 'rob_moveit_config'
+    package_name_moveit = 'bb01_moveit_config'
 
-    default_robot_name = 'rob'
+    default_robot_name = 'bb01'
     gazebo_models_path = 'models'
-    default_world_file = 'pick_and_place_demo.world'
+    default_world_file = 'empty.world'
     gazebo_worlds_path = 'worlds'
 
     ros_gz_bridge_config_file_path = 'config/ros_gz_bridge.yaml'
@@ -172,7 +172,7 @@ def generate_launch_description():
             os.path.join(pkg_share_description, 'launch', 'robot_state_publisher.launch.py')
         ]),
         launch_arguments={
-            'robot': 'rob',
+            'robot': 'bb01',
             'jsp_gui': jsp_gui,
             'use_camera': use_camera,
             'use_gazebo': use_gazebo,
