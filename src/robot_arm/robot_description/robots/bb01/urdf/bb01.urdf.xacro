@@ -2,7 +2,7 @@
 <!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
-  <!-- NOTE: Collision geometry uses simplified boxes instead of high-poly meshes to prevent MoveIt startup timeout/freeze. -->
+  <!-- NOTE: Collision geometry uses dedicated collision meshes for accurate collision detection. -->
 <robot name="bb01" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:arg name="add_world" default="true"/>
@@ -60,7 +60,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -99,7 +100,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -156,7 +158,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -213,7 +216,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -270,7 +274,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_4.STL" />
       </geometry>
     </collision>
   </link>
@@ -327,7 +332,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_5.STL" />
       </geometry>
     </collision>
   </link>
@@ -384,7 +390,8 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <box size="0.1 0.1 0.1"/>
+        <mesh
+          filename="package://robot_description/robots/bb01/meshes/collision_link_6.STL" />
       </geometry>
     </collision>
   </link>
