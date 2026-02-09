@@ -2,6 +2,7 @@
 <!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+  <!-- NOTE: Collision geometry uses simplified boxes instead of high-poly meshes to prevent MoveIt startup timeout/freeze. -->
 <robot name="bb01" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:arg name="add_world" default="true"/>
@@ -16,8 +17,8 @@
   <xacro:if value="$(arg add_world)">
     <link name="world"/>
     
-    <!-- Fixed joint connecting world to base_link -->
-    <joint name="world_to_base_link" type="fixed">
+    <!-- Fixed joint connecting world to base_link (named virtual_joint to match SRDF) -->
+    <joint name="virtual_joint" type="fixed">
       <parent link="world"/>
       <child link="base_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -59,8 +60,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/base_link.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -99,8 +99,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_1.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -119,7 +118,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="46.74"
       velocity="10" />
   </joint>
   <link
@@ -157,8 +156,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_2.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -177,7 +175,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="41.82"
       velocity="10" />
   </joint>
   <link
@@ -215,8 +213,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_3.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -235,7 +232,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="24.27"
       velocity="10" />
   </joint>
   <link
@@ -273,8 +270,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_4.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -293,7 +289,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="1.85"
       velocity="10" />
   </joint>
   <link
@@ -331,8 +327,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_5.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -351,7 +346,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="2.03"
       velocity="10" />
   </joint>
   <link
@@ -389,8 +384,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh
-          filename="package://robot_description/robots/bb01/meshes/link_6.STL" />
+        <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
   </link>
@@ -409,7 +403,7 @@
     <limit
       lower="${-PI/2}"
       upper="${PI/2}"
-      effort="10"
+      effort="0.45"
       velocity="10" />
   </joint>
 

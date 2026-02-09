@@ -17,3 +17,6 @@ moveit_simple_controller_manager:
       - joint_6
     action_ns: follow_joint_trajectory
     default: true
+
+  current_state_monitor:
+    timeout: 5.0  # Increased timeout for simulation clock handling

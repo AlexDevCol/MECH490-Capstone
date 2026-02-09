@@ -48,6 +48,22 @@ This directory contains documentation for the first day of Sprint 1, covering th
 
 ---
 
+### 🐛 [BB01 MoveIt Debugging Session](./bb01-moveit-debugging-session.md)
+**Documentation of MoveIt performance issue resolution**
+
+- Problem: MoveIt motion planner not loading for `bb01`
+- Root cause: High-poly collision meshes (61MB) causing startup timeout
+- Solution: Simplified collision geometry
+- Key learnings and recommendations
+
+**Use this document to:**
+- Understand the MoveIt performance issue encountered
+- Learn about mesh size impact on MoveIt initialization
+- Reference debugging methodology for similar issues
+- Understand the trade-offs between collision accuracy and performance
+
+---
+
 ## Quick Reference
 
 ### Launch a Robot
@@ -95,6 +111,10 @@ src/robot_arm/robot_description/
   - [x] Fixed display.launch.py YAML parsing error
   - [x] Updated bb01 joint limits (-π/2 to +π/2)
 - [x] Validation testing (all three robots verified)
+- [x] BB01 MoveIt debugging and performance fix
+  - [x] Identified high-poly mesh performance issue
+  - [x] Fixed collision geometry for MoveIt compatibility
+  - [x] Verified motion planner loading and functionality
 
 ### 🔄 In Progress
 - [ ] Phase 1.5: Dependency updates in other packages (optional)
@@ -105,4 +125,4 @@ src/robot_arm/robot_description/
 
 ---
 
-**Last Updated:** January 20, 2026 (Phase 1.5 Testing Complete)
+**Last Updated:** February 2026 (BB01 MoveIt Performance Fix Complete)
