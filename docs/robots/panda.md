@@ -146,14 +146,14 @@ ros2 launch panda_description display.launch.py
 ### Launch in Gazebo
 
 ```bash
-ros2 launch rob_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo panda.gazebo.launch.py
 ```
 
 ### Launch with MoveIt
 
 ```bash
 # Terminal 1
-ros2 launch rob_gazebo panda.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo panda.gazebo.launch.py use_rviz:=false
 
 # Terminal 2 (after ~15 seconds)
 ros2 launch panda_moveit_config move_group.launch.py

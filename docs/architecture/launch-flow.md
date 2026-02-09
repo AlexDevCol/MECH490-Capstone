@@ -7,12 +7,12 @@ This document describes the launch file hierarchy, which nodes each file spawns,
 ```mermaid
 flowchart TB
     subgraph scripts [Bringup Scripts]
-        robScript[rob_gazebo_and_moveit.sh]
+        robScript[robot_gazebo_and_moveit.sh]
         pandaScript[panda_gazebo_and_moveit.sh]
         robMtcScript[rob_mtc_demos.sh]
     end
     
-    subgraph gazebo_pkg [rob_gazebo/launch]
+    subgraph gazebo_pkg [robot_gazebo/launch]
         robGazebo[rob.gazebo.launch.py]
         pandaGazebo[panda.gazebo.launch.py]
     end
@@ -53,12 +53,12 @@ flowchart TB
 
 Located in `src/robot_arm/rob_bringup/scripts/`
 
-### rob_gazebo_and_moveit.sh
+### robot_gazebo_and_moveit.sh
 
 Launches the complete Rob robot simulation with motion planning.
 
 **Execution order:**
-1. `ros2 launch rob_gazebo rob.gazebo.launch.py` (background)
+1. `ros2 launch robot_gazebo rob.gazebo.launch.py` (background)
 2. Wait 15 seconds for Gazebo to initialize
 3. `ros2 launch rob_moveit_config move_group.launch.py` (background)
 4. Adjust Gazebo camera position
@@ -77,7 +77,7 @@ Same as above but for the Panda robot, using `panda.gazebo.launch.py` and `panda
 
 ## Gazebo Launch Files
 
-Located in `src/robot_arm/rob_gazebo/launch/`
+Located in `src/robot_arm/robot_gazebo/launch/`
 
 ### rob.gazebo.launch.py
 
@@ -306,11 +306,11 @@ ros2 launch robot_gazebo simulation.launch.py robot:=bb01
 
 ```bash
 # Rob robot
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 ros2 launch rob_moveit_config move_group.launch.py
 
 # Panda robot
-ros2 launch rob_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo panda.gazebo.launch.py
 ros2 launch panda_moveit_config move_group.launch.py
 ```
 
@@ -324,11 +324,11 @@ ros2 launch panda_description display.launch.py
 ### With Custom World
 
 ```bash
-ros2 launch rob_gazebo rob.gazebo.launch.py world_file:=house.world
+ros2 launch robot_gazebo rob.gazebo.launch.py world_file:=house.world
 ```
 
 ### Without RViz
 
 ```bash
-ros2 launch rob_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
 ```

@@ -405,9 +405,9 @@ joint_limits:
 
 ## Step 5: Add Gazebo Launch
 
-### 5.1 Option A: Add to Existing rob_gazebo
+### 5.1 Option A: Add to Existing robot_gazebo
 
-Add a new launch file `<robot>.gazebo.launch.py` to `rob_gazebo/launch/`:
+Add a new launch file `<robot>.gazebo.launch.py` to `robot_gazebo/launch/`:
 
 ```python
 # Copy structure from rob.gazebo.launch.py
@@ -421,7 +421,7 @@ default_robot_name = '<robot>'
 
 Create `<robot>_gazebo` package with:
 - `launch/<robot>.gazebo.launch.py`
-- `worlds/` (or share from rob_gazebo)
+- `worlds/` (or share from robot_gazebo)
 - `config/ros_gz_bridge.yaml`
 
 ### 5.3 Key Launch File Components
@@ -477,14 +477,14 @@ ros2 launch <robot>_description display.launch.py
 ### 6.3 Test Gazebo Simulation
 
 ```bash
-ros2 launch rob_gazebo <robot>.gazebo.launch.py
+ros2 launch robot_gazebo <robot>.gazebo.launch.py
 ```
 
 ### 6.4 Test MoveIt
 
 ```bash
 # Terminal 1
-ros2 launch rob_gazebo <robot>.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo <robot>.gazebo.launch.py use_rviz:=false
 
 # Terminal 2
 ros2 launch <robot>_moveit_config move_group.launch.py

@@ -206,7 +206,7 @@ def configure_launch(context):
     config = ROBOT_CONFIGS[robot]
     
     # Constants for paths to different files and folders
-    package_name_gazebo = 'rob_gazebo'
+    package_name_gazebo = 'robot_gazebo'
     package_name_description = config['description_package']
     package_name_moveit = config['moveit_package']
     

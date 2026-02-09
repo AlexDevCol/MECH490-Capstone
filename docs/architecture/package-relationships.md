@@ -18,7 +18,7 @@ graph TB
     end
     
     subgraph sim [Simulation]
-        rob_gazebo[rob_gazebo]
+        robot_gazebo[robot_gazebo]
     end
     
     subgraph demos [Demos and Applications]
@@ -44,10 +44,10 @@ graph TB
     panda_desc --> panda_moveit
     rob_desc --> rob_moveit
     
-    panda_moveit --> rob_gazebo
-    rob_moveit --> rob_gazebo
-    panda_desc --> rob_gazebo
-    rob_desc --> rob_gazebo
+    panda_moveit --> robot_gazebo
+    rob_moveit --> robot_gazebo
+    panda_desc --> robot_gazebo
+    rob_desc --> robot_gazebo
     
     rob_moveit --> rob_mtc
     mtc --> rob_mtc
@@ -56,7 +56,7 @@ graph TB
     
     rob_moveit --> rob_moveit_demos
     
-    rob_gazebo --> rob_bringup
+    robot_gazebo --> rob_bringup
     panda_moveit --> rob_bringup
     rob_moveit --> rob_bringup
     
@@ -67,35 +67,35 @@ graph TB
 
 ### panda_description
 **Depends on:** None (root package)
-**Used by:** `panda_moveit_config`, `rob_gazebo`
+**Used by:** `panda_moveit_config`, `robot_gazebo`
 
 Provides the Panda robot URDF, meshes, and basic visualization.
 
 ### rob_description
 **Depends on:** None (root package)
-**Used by:** `rob_moveit_config`, `rob_gazebo`
+**Used by:** `rob_moveit_config`, `robot_gazebo`
 
 Provides the Rob (Moveo) robot URDF, meshes, and basic visualization.
 
 ### bb01_description
 **Depends on:** None (root package)
-**Used by:** (Future: bb01_moveit_config, rob_gazebo)
+**Used by:** (Future: bb01_moveit_config, robot_gazebo)
 
 Provides the BB01 robot URDF, meshes. Currently under construction.
 
 ### panda_moveit_config
 **Depends on:** `panda_description`
-**Used by:** `rob_gazebo`, `rob_bringup`
+**Used by:** `robot_gazebo`, `rob_bringup`
 
 MoveIt configuration for the Panda robot including kinematics, controllers, and planning pipelines.
 
 ### rob_moveit_config
 **Depends on:** `rob_description`
-**Used by:** `rob_gazebo`, `rob_bringup`, `rob_mtc_demos`, `rob_mtc_pick_place_demo`
+**Used by:** `robot_gazebo`, `rob_bringup`, `rob_mtc_demos`, `rob_mtc_pick_place_demo`
 
 MoveIt configuration for the Rob robot.
 
-### rob_gazebo
+### robot_gazebo
 **Depends on:** `panda_description`, `rob_description`, `panda_moveit_config`, `rob_moveit_config`
 **Used by:** `rob_bringup`
 

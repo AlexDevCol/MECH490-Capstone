@@ -33,7 +33,7 @@ src/robot_arm/rob_description/
 ├── urdf/
 │   ├── rob.urdf.xacro              # Main robot description
 │   ├── rob.urdf                    # Generated static URDF
-│   ├── rob_gazebo.xacro            # Gazebo-specific configuration
+│   ├── robot_gazebo.xacro            # Gazebo-specific configuration
 │   ├── rob_ros2_control.xacro      # ros2_control interface
 │   ├── control/
 │   │   ├── gazebo_sim_ros2_control.urdf.xacro
@@ -206,14 +206,14 @@ ros2 launch rob_description display.launch.py
 ### Launch in Gazebo
 
 ```bash
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 ```
 
 ### Launch with MoveIt
 
 ```bash
 # Terminal 1
-ros2 launch rob_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
 
 # Terminal 2 (after ~15 seconds)
 ros2 launch rob_moveit_config move_group.launch.py

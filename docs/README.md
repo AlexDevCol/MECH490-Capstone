@@ -32,7 +32,7 @@ source install/setup.bash
 For the Rob (Moveo) robot:
 ```bash
 # Terminal 1: Launch Gazebo simulation
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 
 # Terminal 2: Launch MoveIt (after Gazebo is ready, ~15s)
 ros2 launch rob_moveit_config move_group.launch.py
@@ -41,7 +41,7 @@ ros2 launch rob_moveit_config move_group.launch.py
 For the Panda robot:
 ```bash
 # Terminal 1: Launch Gazebo simulation
-ros2 launch rob_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo panda.gazebo.launch.py
 
 # Terminal 2: Launch MoveIt (after Gazebo is ready, ~15s)
 ros2 launch panda_moveit_config move_group.launch.py
@@ -68,7 +68,7 @@ ros2 launch panda_description display.launch.py
 | `bb01_description` | BB01 robot URDF (under construction) |
 | `panda_moveit_config` | MoveIt 2 configuration for the Panda robot |
 | `rob_moveit_config` | MoveIt 2 configuration for the Rob robot |
-| `rob_gazebo` | Gazebo simulation worlds and launch files for all robots |
+| `robot_gazebo` | Gazebo simulation worlds and launch files for all robots |
 | `rob_bringup` | Convenience scripts for launching complete systems |
 | `rob_arduino` | Arduino interface for real hardware control |
 | `rob_interfaces` | Custom ROS 2 messages, services, and actions |

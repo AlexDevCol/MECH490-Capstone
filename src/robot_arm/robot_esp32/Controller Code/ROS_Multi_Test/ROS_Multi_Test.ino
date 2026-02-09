@@ -23,10 +23,10 @@
 
 // Stepper motor parameters
 // As per Half Step Mode Recommendation
-#define STEPS_PER_REV 2048  // Steps per motor revolution (0.18° per step)
+#define STEPS_PER_REV 1600  // Steps per motor revolution (0.18° per step)
 #define GEAR_RATIO 19       // Gear ratio (19:1 means 19 motor revs = 1 output rev)
-#define MAX_SPEED 600       // Maximum speed in steps per second
-#define ACCELERATION 60     // Acceleration in steps per second^2
+#define MAX_SPEED 3000       // Maximum speed in steps per second
+#define ACCELERATION 2000     // Acceleration in steps per second^2
 
 // ROS topic names
 #define STEPPER_TOPIC "stepper_angle"
@@ -39,7 +39,7 @@ const int MAX_ANGLE = 180;
 // --- Global Stepper Object ---
 // Use FULL4WIRE mode for 4-pin direct control (full step)
 // Alternative: AccelStepper::HALF4WIRE for half-step mode (more steps, smoother)
-AccelStepper stepper(AccelStepper::FULL4WIRE, IN1_PIN, IN3_PIN, IN2_PIN, IN4_PIN);
+AccelStepper stepper(1, IN1_PIN, IN2_PIN);
 
 // --- Position Tracking ---
 float steps_per_degree;        // Calculated steps per output degree

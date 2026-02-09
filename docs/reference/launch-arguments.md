@@ -59,7 +59,7 @@ ros2 launch panda_description robot_state_publisher.launch.py use_gazebo:=true u
 
 ### rob.gazebo.launch.py / panda.gazebo.launch.py
 
-Located in: `rob_gazebo/launch/`
+Located in: `robot_gazebo/launch/`
 
 Full Gazebo simulation launch.
 
@@ -90,16 +90,16 @@ Full Gazebo simulation launch.
 **Examples:**
 ```bash
 # Basic simulation
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 
 # Custom world, no RViz
-ros2 launch rob_gazebo rob.gazebo.launch.py world_file:=house.world use_rviz:=false
+ros2 launch robot_gazebo rob.gazebo.launch.py world_file:=house.world use_rviz:=false
 
 # Custom spawn position
-ros2 launch rob_gazebo panda.gazebo.launch.py x:=1.0 y:=0.5 z:=0.0
+ros2 launch robot_gazebo panda.gazebo.launch.py x:=1.0 y:=0.5 z:=0.0
 
 # With camera enabled
-ros2 launch rob_gazebo rob.gazebo.launch.py use_camera:=true
+ros2 launch robot_gazebo rob.gazebo.launch.py use_camera:=true
 ```
 
 ---
@@ -178,7 +178,7 @@ ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=modular robot_name:=rob
 
 ```bash
 # Simulation (default)
-ros2 launch rob_gazebo rob.gazebo.launch.py use_sim_time:=true
+ros2 launch robot_gazebo rob.gazebo.launch.py use_sim_time:=true
 
 # Real hardware (no Gazebo)
 ros2 launch rob_description robot_state_publisher.launch.py use_gazebo:=false use_sim_time:=false
@@ -187,14 +187,14 @@ ros2 launch rob_description robot_state_publisher.launch.py use_gazebo:=false us
 ### Headless Operation (No GUI)
 
 ```bash
-ros2 launch rob_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
 ```
 
 ### Debug Mode
 
 ```bash
 # Verbose Gazebo output
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 # Gazebo already runs with -v 4 (verbose level 4)
 ```
 
@@ -213,7 +213,7 @@ Some behaviors are controlled by environment variables:
 Set before launching:
 ```bash
 export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:~/custom_models
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 ```
 
 ---
@@ -242,11 +242,11 @@ flowchart LR
 
 ```bash
 # Rob + MoveIt
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 ros2 launch rob_moveit_config move_group.launch.py
 
 # Panda + MoveIt  
-ros2 launch rob_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo panda.gazebo.launch.py
 ros2 launch panda_moveit_config move_group.launch.py
 ```
 
@@ -267,11 +267,11 @@ ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=cartesian
 
 ```bash
 # Headless simulation for CI
-ros2 launch rob_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
 
 # Empty world for testing
-ros2 launch rob_gazebo rob.gazebo.launch.py world_file:=empty.world
+ros2 launch robot_gazebo rob.gazebo.launch.py world_file:=empty.world
 
 # With depth camera
-ros2 launch rob_gazebo rob.gazebo.launch.py use_camera:=true
+ros2 launch robot_gazebo rob.gazebo.launch.py use_camera:=true
 ```

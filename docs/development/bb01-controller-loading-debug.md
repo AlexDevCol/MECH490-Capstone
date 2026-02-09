@@ -113,7 +113,7 @@ When launching `bb01` robot in Gazebo simulation:
 
 ### Files Modified
 
-1. **`src/robot_arm/rob_gazebo/launch/simulation.launch.py`**
+1. **`src/robot_arm/robot_gazebo/launch/simulation.launch.py`**
    - Updated `else` block to use `IncludeLaunchDescription` for `bb01`'s dedicated launch file
    - Removed inline controller loading code
    - Now matches `rob`'s controller loading pattern exactly
@@ -212,7 +212,7 @@ Despite matching `rob`'s architecture exactly, the `controller_manager` is still
 - `src/robot_arm/robot_description/robots/bb01/urdf/control/gazebo_sim_ros2_control.urdf.xacro` - Plugin configuration
 - `src/robot_arm/robot_description/robots/bb01/config/ros2_controllers.yaml` - Controller definitions
 - `src/robot_arm/robot_description/robots/bb01/launch/load_ros2_controllers.launch.py` - Controller loading
-- `src/robot_arm/rob_gazebo/launch/simulation.launch.py` - Main simulation launch file
+- `src/robot_arm/robot_gazebo/launch/simulation.launch.py` - Main simulation launch file
 
 ## References
 

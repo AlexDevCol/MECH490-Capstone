@@ -54,7 +54,7 @@ source install/setup.bash
 **Direct launch (Rob robot):**
 ```bash
 # Terminal 1: Start Gazebo
-ros2 launch rob_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo rob.gazebo.launch.py
 
 # Terminal 2: Start MoveIt (after Gazebo loads)
 ros2 launch rob_moveit_config move_group.launch.py
@@ -63,7 +63,7 @@ ros2 launch rob_moveit_config move_group.launch.py
 **Direct launch (Panda robot):**
 ```bash
 # Terminal 1
-ros2 launch rob_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo panda.gazebo.launch.py
 
 # Terminal 2
 ros2 launch panda_moveit_config move_group.launch.py
@@ -109,7 +109,7 @@ src/
 │   ├── bb01_description/       # BB01 URDF and meshes (WIP)
 │   ├── panda_moveit_config/    # Panda MoveIt configuration
 │   ├── rob_moveit_config/      # Rob MoveIt configuration
-│   ├── rob_gazebo/             # Gazebo simulation
+│   ├── robot_gazebo/             # Gazebo simulation
 │   ├── rob_bringup/            # Launch scripts
 │   ├── rob_mtc_demos/          # MoveIt Task Constructor demos
 │   └── ...

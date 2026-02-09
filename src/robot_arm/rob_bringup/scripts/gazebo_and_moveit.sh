@@ -1,5 +1,15 @@
 #!/bin/bash
-# Single script to launch the rob with Gazebo, RViz, and MoveIt 2
+# Single script to launch any robot with Gazebo, RViz, and MoveIt 2
+# Usage: ./gazebo_and_moveit.sh [robot]
+#   robot: panda, rob (default), or bb01
+
+ROBOT=${1:-rob}
+
+# Validate robot selection
+if [[ ! "$ROBOT" =~ ^(panda|rob|bb01)$ ]]; then
+    echo "Error: Invalid robot '$ROBOT'. Must be one of: panda, rob, bb01"
+    exit 1
+fi
 
 cleanup() {
     echo "Cleaning up..."
@@ -10,8 +20,9 @@ cleanup() {
 # Set up cleanup trap
 trap 'cleanup' SIGINT SIGTERM
 
-echo "Launching Gazebo simulation..."
-ros2 launch rob_gazebo panda.gazebo.launch.py \
+echo "Launching Gazebo simulation for robot: $ROBOT"
+ros2 launch robot_gazebo simulation.launch.py \
+    robot:=$ROBOT \
     load_controllers:=true \
     world_file:=empty.world \
     use_camera:=false \
@@ -26,7 +37,7 @@ ros2 launch rob_gazebo panda.gazebo.launch.py \
     yaw:=0.0 &
 
 sleep 15
-ros2 launch panda_moveit_config move_group.launch.py &
+ros2 launch ${ROBOT}_moveit_config move_group.launch.py &
 
 echo "Adjusting camera position..."
 gz service -s /gui/move_to/pose --reqtype gz.msgs.GUICamera --reptype gz.msgs.Boolean --timeout 2000 --req "pose: {position: {x: 1.36, y: -0.58, z: 0.95} orientation: {x: -0.26, y: 0.1, z: 0.89, w: 0.35}}"
