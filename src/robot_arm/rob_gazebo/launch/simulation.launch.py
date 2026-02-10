@@ -36,17 +36,17 @@ from ament_index_python.packages import get_package_share_directory
 ROBOT_CONFIGS = {
     'panda': {
         'description_package': 'robot_description',
-        'moveit_package': 'panda_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.1',
     },
     'rob': {
         'description_package': 'robot_description',
-        'moveit_package': 'rob_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.1',
     },
     'bb01': {
         'description_package': 'robot_description',
-        'moveit_package': 'bb01_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.0',  # Spawn on ground level
     },
 }

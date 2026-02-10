@@ -37,7 +37,7 @@ ros2 launch robot_gazebo simulation.launch.py \
     yaw:=0.0 &
 
 sleep 15
-ros2 launch ${ROBOT}_moveit_config move_group.launch.py &
+ros2 launch robot_moveit_config move_group.launch.py robot:=$ROBOT &
 
 echo "Adjusting camera position..."
 gz service -s /gui/move_to/pose --reqtype gz.msgs.GUICamera --reptype gz.msgs.Boolean --timeout 2000 --req "pose: {position: {x: 1.36, y: -0.58, z: 0.95} orientation: {x: -0.26, y: 0.1, z: 0.89, w: 0.35}}"

@@ -22,6 +22,7 @@ from launch.actions import (
     ExecuteProcess,
     TimerAction
 )
+from launch.event_handlers import OnProcessStart
 from pathlib import Path
 
 from launch.conditions import IfCondition
@@ -36,17 +37,17 @@ from ament_index_python.packages import get_package_share_directory
 ROBOT_CONFIGS = {
     'panda': {
         'description_package': 'robot_description',
-        'moveit_package': 'panda_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.1',
     },
     'rob': {
         'description_package': 'robot_description',
-        'moveit_package': 'rob_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.1',
     },
     'bb01': {
         'description_package': 'robot_description',
-        'moveit_package': 'bb01_moveit_config',
+        'moveit_package': 'robot_moveit_config',
         'default_z': '0.0',  # Spawn on ground level
     },
 }
@@ -292,7 +293,7 @@ def configure_launch(context):
                 os.path.join(pkg_share_moveit, 'launch', 'load_ros2_controllers.launch.py')
             ]),
             launch_arguments={
-                'use_sim_time': use_sim_time
+                'robot': robot,  # Pass robot selection to parametric controller launcher
             }.items(),
             condition=IfCondition(load_controllers)
         )
@@ -311,6 +312,7 @@ def configure_launch(context):
     )
 
     # Bridge ROS topics and Gazebo messages for establishing communication
+    # Delay bridge startup to wait for Gazebo to be ready
     start_gazebo_ros_bridge_cmd = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -353,19 +355,39 @@ def configure_launch(context):
         ]
     )
 
+    # Sequence: Wait for Gazebo to start, then start bridge, then spawn robot
+    # Delay bridge startup by 5 seconds after Gazebo starts
+    delayed_bridge_start = TimerAction(
+        period=5.0,
+        actions=[start_gazebo_ros_bridge_cmd]
+    )
+
+    # Delay image bridge startup by 6 seconds after Gazebo starts
+    delayed_image_bridge_start = TimerAction(
+        period=6.0,
+        actions=[start_gazebo_ros_image_bridge_cmd]
+    )
+
+    # Delay robot spawner by 8 seconds after Gazebo starts (gives time for bridge to be ready)
+    delayed_spawner_start = TimerAction(
+        period=8.0,
+        actions=[start_gazebo_ros_spawner_cmd]
+    )
+
     # Build list of actions to return
     actions = [
         declare_robot_name_cmd,
         declare_z_cmd,  # Add z argument with robot-specific default
         set_description_share_path,
         robot_state_publisher_cmd,
-        start_gazebo_cmd,
-        start_gazebo_ros_bridge_cmd,
-        start_gazebo_ros_spawner_cmd,
-        start_gazebo_ros_image_bridge_cmd,
+        start_gazebo_cmd,  # Start Gazebo first
+        delayed_bridge_start,  # Start bridge 5s after Gazebo
+        delayed_image_bridge_start,  # Start image bridge 6s after Gazebo
+        delayed_spawner_start,  # Spawn robot 8s after Gazebo
     ]
 
     # Add controller loading (either from MoveIt config or fallback for robots without MoveIt)
+    # Controllers already have their own 10s delay built in, so they'll start after robot spawns
     if load_controllers_cmd is not None:
         actions.insert(3, load_controllers_cmd)  # Insert after robot_state_publisher_cmd
 
