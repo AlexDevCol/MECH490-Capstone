@@ -237,7 +237,7 @@ Create `urdf/control/<robot>_ros2_control.urdf.xacro`:
 
 Create `urdf/control/gazebo_sim_ros2_control.urdf.xacro`:
 
-**Option A: With MoveIt Config (when MoveIt is available)**
+**Option A: With Unified MoveIt Config (Recommended)**
 
 ```xml
 <?xml version="1.0"?>
@@ -246,7 +246,7 @@ Create `urdf/control/gazebo_sim_ros2_control.urdf.xacro`:
         <xacro:if value="${use_gazebo}">
             <gazebo>
                 <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-                    <parameters>$(find <robot>_moveit_config)/config/ros2_controllers.yaml</parameters>
+                    <parameters>$(find robot_moveit_config)/robots/<robot>/config/ros2_controllers.yaml</parameters>
                     <ros>
                         <remapping>/controller_manager/robot_description:=/robot_description</remapping>
                     </ros>
@@ -257,7 +257,7 @@ Create `urdf/control/gazebo_sim_ros2_control.urdf.xacro`:
 </robot>
 ```
 
-**Option B: Without MoveIt Config (standalone, like BB01)**
+**Option B: Without MoveIt Config (standalone, temporary)**
 
 ```xml
 <?xml version="1.0"?>
@@ -277,11 +277,18 @@ Create `urdf/control/gazebo_sim_ros2_control.urdf.xacro`:
 </robot>
 ```
 
-**Example:** See `robot_description/robots/bb01/urdf/control/gazebo_sim_ros2_control.urdf.xacro` for the standalone approach.
+**Note:** Once MoveIt config is created, update to Option A to use the unified `robot_moveit_config` package.
 
-### 3.4 Create Basic Controller Config (Optional but Recommended)
+**Example:** See `robot_description/robots/bb01/urdf/control/gazebo_sim_ros2_control.urdf.xacro` for reference.
 
-For basic physics simulation, create `config/ros2_controllers.yaml`:
+### 3.4 Create Basic Controller Config
+
+**Location depends on whether you have MoveIt config:**
+
+- **With MoveIt:** `robot_moveit_config/robots/<robot>/config/ros2_controllers.yaml`
+- **Without MoveIt (temporary):** `robot_description/robots/<robot>/config/ros2_controllers.yaml`
+
+For basic physics simulation, create `ros2_controllers.yaml`:
 
 ```yaml
 # Basic ros2_control controller configuration for <robot>
@@ -304,9 +311,9 @@ joint_state_broadcaster:
     # from the ros2_control hardware interface
 ```
 
-**Note:** This minimal config is sufficient for Gazebo physics. Trajectory controllers (for MoveIt) can be added later.
+**Note:** This minimal config is sufficient for Gazebo physics. Trajectory controllers (for MoveIt) should be added to `moveit_controllers.yaml` in the MoveIt config directory.
 
-**Example:** See `robot_description/robots/bb01/config/ros2_controllers.yaml` for a complete example.
+**Example:** See `robot_moveit_config/robots/bb01/config/ros2_controllers.yaml` for a complete example.
 
 ### 3.5 Update Main URDF to Include Control Files
 
@@ -350,6 +357,8 @@ Add the following includes to your main URDF file (`<robot>.urdf.xacro`) **befor
 
 ## Step 4: Create MoveIt Configuration
 
+**Note:** The project uses a unified parametric MoveIt configuration package (`robot_moveit_config`). Instead of creating a separate `<robot>_moveit_config` package, you'll add your robot's configs to the existing unified package.
+
 ### 4.1 Using MoveIt Setup Assistant
 
 ```bash
@@ -357,21 +366,46 @@ ros2 launch moveit_setup_assistant setup_assistant.launch.py
 ```
 
 Steps in Setup Assistant:
-1. Load URDF from `<robot>_description`
+1. Load URDF from `robot_description` (use `robot:=<robot>` argument if needed)
 2. Generate self-collision matrix
 3. Define planning groups (e.g., "arm", "gripper")
-4. Set up end effector
+4. Set up end effector (if applicable)
 5. Define robot poses (home, ready, etc.)
 6. Configure ros2_control interfaces
-7. Generate package
+7. Generate package (you can generate to a temp location, then copy files)
+
+**After Setup Assistant:**
+Copy the generated config files to the unified package:
+```bash
+# Copy config files to unified structure
+cp -r <temp_moveit_config>/config/* \
+  src/robot_arm/robot_moveit_config/robots/<robot>/config/
+```
 
 ### 4.2 Manual Configuration (Alternative)
 
-Create `<robot>_moveit_config/config/` files:
+Create config files in `robot_moveit_config/robots/<robot>/config/`:
+
+**Directory Structure:**
+```
+robot_moveit_config/
+  robots/
+    <robot>/
+      config/
+        ├── <robot>.srdf
+        ├── kinematics.yaml
+        ├── joint_limits.yaml
+        ├── moveit_controllers.yaml
+        ├── ompl_planning.yaml
+        ├── stomp_planning.yaml
+        ├── pilz_industrial_motion_planner_planning.yaml
+        ├── pilz_cartesian_limits.yaml
+        └── initial_positions.yaml
+```
 
 **kinematics.yaml:**
 ```yaml
-<robot>_arm:
+arm:  # or <robot>_arm depending on your planning group name
   kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
   kinematics_solver_search_resolution: 0.005
   kinematics_solver_timeout: 0.05
@@ -380,7 +414,7 @@ Create `<robot>_moveit_config/config/` files:
 **joint_limits.yaml:**
 ```yaml
 joint_limits:
-  joint1:
+  joint_1:  # Use your actual joint names
     has_velocity_limits: true
     max_velocity: 2.0
     has_acceleration_limits: true
@@ -391,70 +425,92 @@ joint_limits:
 ```xml
 <?xml version="1.0"?>
 <robot name="<robot>">
-  <group name="<robot>_arm">
+  <group name="arm">  # or <robot>_arm
     <chain base_link="base_link" tip_link="end_effector_link"/>
   </group>
-  <group_state name="home" group="<robot>_arm">
-    <joint name="joint1" value="0"/>
+  <group_state name="home" group="arm">
+    <joint name="joint_1" value="0"/>
     <!-- more joints -->
   </group_state>
 </robot>
 ```
 
+**Reference Examples:**
+- See `robot_moveit_config/robots/bb01/config/` for a 6-DOF arm example
+- See `robot_moveit_config/robots/rob/config/` for an arm with gripper example
+- See `robot_moveit_config/robots/panda/config/` for a complete example
+
+### 4.3 Update Controller Configuration
+
+If your robot has a gripper or special controllers, you may need to update the parametric controller launcher. See `robot_moveit_config/launch/load_ros2_controllers.launch.py` and add your robot's controller sequence to the `ROBOT_CONTROLLERS` dictionary if needed.
+
 ---
 
 ## Step 5: Add Gazebo Launch
 
-### 5.1 Option A: Add to Existing robot_gazebo
+**Note:** The project uses a unified parametric Gazebo launch file (`robot_gazebo/launch/simulation.launch.py`). You typically don't need to create a new launch file - just add your robot to the configuration dictionary.
 
-Add a new launch file `<robot>.gazebo.launch.py` to `robot_gazebo/launch/`:
+### 5.1 Add Robot to Configuration
 
-```python
-# Copy structure from rob.gazebo.launch.py
-# Update package names:
-package_name_description = '<robot>_description'
-package_name_moveit = '<robot>_moveit_config'
-default_robot_name = '<robot>'
-```
-
-### 5.2 Option B: Create Dedicated Package
-
-Create `<robot>_gazebo` package with:
-- `launch/<robot>.gazebo.launch.py`
-- `worlds/` (or share from robot_gazebo)
-- `config/ros_gz_bridge.yaml`
-
-### 5.3 Key Launch File Components
+Edit `robot_gazebo/launch/simulation.launch.py` and add your robot to the `ROBOT_CONFIGS` dictionary:
 
 ```python
-# Robot State Publisher
-robot_state_publisher_cmd = IncludeLaunchDescription(
-    PythonLaunchDescriptionSource([
-        os.path.join(pkg_share_description, 'launch', 'robot_state_publisher.launch.py')
-    ]),
-    launch_arguments={
-        'use_gazebo': 'true',
-        'use_sim_time': 'true'
-    }.items()
-)
+ROBOT_CONFIGS = {
+    'panda': {
+        'description_package': 'robot_description',
+        'moveit_package': 'robot_moveit_config',
+        'default_z': '0.1',
+    },
+    'rob': {
+        'description_package': 'robot_description',
+        'moveit_package': 'robot_moveit_config',
+        'default_z': '0.1',
+    },
+    'bb01': {
+        'description_package': 'robot_description',
+        'moveit_package': 'robot_moveit_config',
+        'default_z': '0.0',
+    },
+    '<robot>': {  # Add your robot here
+        'description_package': 'robot_description',
+        'moveit_package': 'robot_moveit_config',
+        'default_z': '0.0',  # Adjust based on your robot's base height
+    },
+}
+```
 
-# Gazebo
-start_gazebo_cmd = IncludeLaunchDescription(
-    PythonLaunchDescriptionSource(
-        os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-    launch_arguments=[('gz_args', [' -r -v 4 ', world_path])]
-)
-
-# Spawn Robot
-start_gazebo_ros_spawner_cmd = Node(
-    package='ros_gz_sim',
-    executable='create',
-    arguments=[
-        '-topic', '/robot_description',
-        '-name', robot_name,
-    ]
+Also update the `robot` argument choices:
+```python
+robot_arg = DeclareLaunchArgument(
+    'robot',
+    default_value='rob',
+    choices=['panda', 'rob', 'bb01', '<robot>'],  # Add your robot
+    description='Robot to simulate'
 )
 ```
+
+### 5.2 Launch Your Robot
+
+Once added to the configuration, launch your robot with:
+
+```bash
+ros2 launch robot_gazebo simulation.launch.py robot:=<robot>
+```
+
+The unified launch file handles:
+- Robot state publisher (with `robot:=` argument)
+- Gazebo startup with proper sequencing
+- ROS-Gazebo bridge
+- Robot spawning (with delays to ensure Gazebo is ready)
+- Controller loading (from `robot_moveit_config`)
+
+### 5.3 Key Launch File Features
+
+The unified `simulation.launch.py` includes:
+- **Proper sequencing:** Gazebo starts first, then bridge, then robot spawns (with delays)
+- **Parametric robot selection:** All robots use the same launch file
+- **Automatic controller loading:** Uses `robot_moveit_config/launch/load_ros2_controllers.launch.py`
+- **Configurable spawn pose:** x, y, z, roll, pitch, yaw arguments
 
 ---
 
@@ -477,17 +533,23 @@ ros2 launch <robot>_description display.launch.py
 ### 6.3 Test Gazebo Simulation
 
 ```bash
-ros2 launch robot_gazebo <robot>.gazebo.launch.py
+# Using the unified launch file
+ros2 launch robot_gazebo simulation.launch.py robot:=<robot>
 ```
 
 ### 6.4 Test MoveIt
 
 ```bash
-# Terminal 1
-ros2 launch robot_gazebo <robot>.gazebo.launch.py use_rviz:=false
+# Terminal 1: Launch Gazebo simulation
+ros2 launch robot_gazebo simulation.launch.py robot:=<robot> use_rviz:=false
 
-# Terminal 2
-ros2 launch <robot>_moveit_config move_group.launch.py
+# Terminal 2: Launch MoveIt (uses unified parametric launch)
+ros2 launch robot_moveit_config move_group.launch.py robot:=<robot>
+```
+
+**Or use the bringup script:**
+```bash
+./src/robot_arm/rob_bringup/scripts/gazebo_and_moveit.sh <robot>
 ```
 
 ### 6.5 Common Issues
@@ -512,11 +574,12 @@ ros2 launch <robot>_moveit_config move_group.launch.py
 - [ ] **Gazebo plugin xacro created** (`gazebo_sim_ros2_control.urdf.xacro`)
 - [ ] **Basic controller config created** (`ros2_controllers.yaml` with `joint_state_broadcaster`)
 - [ ] **Control files included in main URDF** (before closing `</robot>` tag)
-- [ ] MoveIt configuration generated (optional, can be done later)
-- [ ] Planning groups defined (MoveIt)
-- [ ] Kinematics solver configured (MoveIt)
-- [ ] Gazebo launch file created
-- [ ] Controllers configured and loading
+- [ ] MoveIt configuration added to `robot_moveit_config/robots/<robot>/config/`
+- [ ] Planning groups defined in SRDF (MoveIt)
+- [ ] Kinematics solver configured in `kinematics.yaml` (MoveIt)
+- [ ] Planning pipeline configs created (`ompl_planning.yaml`, `stomp_planning.yaml`, etc.)
+- [ ] Robot added to `robot_gazebo/launch/simulation.launch.py` ROBOT_CONFIGS
+- [ ] Controllers configured and loading (via `robot_moveit_config`)
 - [ ] Visualization tested in RViz
 - [ ] **Physics simulation tested in Gazebo** (robot doesn't collapse, joints publish transforms)
 - [ ] Motion planning tested with MoveIt (optional)
