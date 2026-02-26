@@ -1,9 +1,11 @@
 # Default initial positions for bb01's ros2_control system
+# NOTE: A slightly bent pose avoids the singularity at the all-zeros "candle" position.
+# At all-zeros, joints 2/3/4/6 share the same rotation axis, making the Jacobian singular.
 
 initial_positions:
   joint_1: 0.0
-  joint_2: 0.0
+  joint_2: 0.4
   joint_3: 0.0
-  joint_4: 0.0
+  joint_4: -0.3
   joint_5: 0.0
   joint_6: 0.0
