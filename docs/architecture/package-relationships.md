@@ -6,15 +6,12 @@ This document describes the dependencies and data flow between packages in the M
 
 ```mermaid
 graph TB
-    subgraph description [Description Packages]
-        panda_desc[panda_description]
-        rob_desc[rob_description]
-        bb01_desc[bb01_description]
+    subgraph description [Description Package]
+        robot_desc[robot_description]
     end
     
-    subgraph moveit [MoveIt Configs]
-        panda_moveit[panda_moveit_config]
-        rob_moveit[rob_moveit_config]
+    subgraph moveit [MoveIt Config]
+        robot_moveit[robot_moveit_config]
     end
     
     subgraph sim [Simulation]
@@ -41,71 +38,61 @@ graph TB
         warehouse[warehouse_ros_mongo]
     end
     
-    panda_desc --> panda_moveit
-    rob_desc --> rob_moveit
+    robot_desc --> robot_moveit
     
-    panda_moveit --> robot_gazebo
-    rob_moveit --> robot_gazebo
-    panda_desc --> robot_gazebo
-    rob_desc --> robot_gazebo
+    robot_moveit --> robot_gazebo
+    robot_desc --> robot_gazebo
     
-    rob_moveit --> rob_mtc
+    robot_moveit --> rob_mtc
     mtc --> rob_mtc
-    rob_moveit --> rob_pick
+    robot_moveit --> rob_pick
     mtc --> rob_pick
     
-    rob_moveit --> rob_moveit_demos
+    robot_moveit --> rob_moveit_demos
     
     robot_gazebo --> rob_bringup
-    panda_moveit --> rob_bringup
-    rob_moveit --> rob_bringup
+    robot_moveit --> rob_bringup
     
     rob_interfaces --> rob_arduino
 ```
 
 ## Dependency Details
 
-### panda_description
+### robot_description
 **Depends on:** None (root package)
-**Used by:** `panda_moveit_config`, `robot_gazebo`
+**Used by:** `robot_moveit_config`, `robot_gazebo`
 
-Provides the Panda robot URDF, meshes, and basic visualization.
+Unified package containing URDF, meshes, and visualization launch files for all robots (panda, rob, bb01). Robots are selected via the `robot:=` launch argument.
 
-### rob_description
-**Depends on:** None (root package)
-**Used by:** `rob_moveit_config`, `robot_gazebo`
+**Structure:**
+- `robots/panda/` - Panda robot files
+- `robots/rob/` - Rob robot files
+- `robots/bb01/` - BB01 robot files
+- `launch/` - Parametric launch files
 
-Provides the Rob (Moveo) robot URDF, meshes, and basic visualization.
-
-### bb01_description
-**Depends on:** None (root package)
-**Used by:** (Future: bb01_moveit_config, robot_gazebo)
-
-Provides the BB01 robot URDF, meshes. Currently under construction.
-
-### panda_moveit_config
-**Depends on:** `panda_description`
-**Used by:** `robot_gazebo`, `rob_bringup`
-
-MoveIt configuration for the Panda robot including kinematics, controllers, and planning pipelines.
-
-### rob_moveit_config
-**Depends on:** `rob_description`
+### robot_moveit_config
+**Depends on:** `robot_description`
 **Used by:** `robot_gazebo`, `rob_bringup`, `rob_mtc_demos`, `rob_mtc_pick_place_demo`
 
-MoveIt configuration for the Rob robot.
+Unified MoveIt configuration package for all robots. Robots are selected via the `robot:=` launch argument. Contains kinematics, controllers, and planning pipelines for each robot.
+
+**Structure:**
+- `robots/panda/config/` - Panda MoveIt configs
+- `robots/rob/config/` - Rob MoveIt configs
+- `robots/bb01/config/` - BB01 MoveIt configs
+- `launch/` - Parametric launch files
 
 ### robot_gazebo
-**Depends on:** `panda_description`, `rob_description`, `panda_moveit_config`, `rob_moveit_config`
+**Depends on:** `robot_description`, `robot_moveit_config`
 **Used by:** `rob_bringup`
 
-Simulation environment for all robots.
+Unified simulation environment for all robots. Uses parametric `simulation.launch.py` with `robot:=` argument to select which robot to simulate.
 
 ### rob_mtc_demos
-**Depends on:** `rob_moveit_config`, `moveit_task_constructor`
+**Depends on:** `robot_moveit_config`, `moveit_task_constructor`
 **Used by:** None (end application)
 
-MoveIt Task Constructor demonstration nodes.
+MoveIt Task Constructor demonstration nodes. Uses `robot_moveit_config` with `robot_name` argument to support multiple robots.
 
 ---
 

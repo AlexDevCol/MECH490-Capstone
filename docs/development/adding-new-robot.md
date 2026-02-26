@@ -22,67 +22,39 @@ flowchart TB
 
 ---
 
-## Step 1: Create Description Package
+## Step 1: Add Robot to Unified Description Package
 
-### 1.1 Create Package Structure
+**Important:** The project uses a unified `robot_description` package. You do NOT create a new package. Instead, add your robot's files to the existing unified package.
 
-```bash
-cd ~/Capstone/MECH490-Capstone/src/robot_arm
-ros2 pkg create --build-type ament_cmake <robot>_description
-```
-
-### 1.2 Add Required Directories
+### 1.1 Create Robot Directory Structure
 
 ```bash
-cd <robot>_description
-mkdir -p urdf meshes launch rviz
-mkdir -p urdf/control urdf/sensors  # Optional subdirectories
+cd ~/Capstone/MECH490-Capstone/src/robot_arm/robot_description
+mkdir -p robots/<robot>/urdf/control
+mkdir -p robots/<robot>/meshes
 ```
 
-### 1.3 Update CMakeLists.txt
+Replace `<robot>` with your robot's name (e.g., `my_robot`).
 
-```cmake
-cmake_minimum_required(VERSION 3.8)
-project(<robot>_description)
+### 1.2 Package Structure
 
-find_package(ament_cmake REQUIRED)
+Your robot files will be organized as:
 
-# Install directories
-install(DIRECTORY
-  urdf
-  meshes
-  launch
-  rviz
-  DESTINATION share/${PROJECT_NAME}
-)
-
-ament_package()
+```
+robot_description/
+└── robots/
+    └── <robot>/
+        ├── urdf/
+        │   ├── <robot>.urdf.xacro
+        │   ├── <robot>.urdf
+        │   └── control/
+        │       ├── gazebo_sim_ros2_control.urdf.xacro
+        │       └── <robot>_ros2_control.urdf.xacro
+        └── meshes/
+            └── *.stl or *.dae files
 ```
 
-### 1.4 Update package.xml
-
-```xml
-<?xml version="1.0"?>
-<package format="3">
-  <name><robot>_description</name>
-  <version>0.0.1</version>
-  <description>URDF description for <robot> robot</description>
-  <maintainer email="you@example.com">Your Name</maintainer>
-  <license>MIT</license>
-
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  
-  <exec_depend>robot_state_publisher</exec_depend>
-  <exec_depend>joint_state_publisher</exec_depend>
-  <exec_depend>joint_state_publisher_gui</exec_depend>
-  <exec_depend>rviz2</exec_depend>
-  <exec_depend>xacro</exec_depend>
-
-  <export>
-    <build_type>ament_cmake</build_type>
-  </export>
-</package>
-```
+The `robot_description` package's `CMakeLists.txt` and `package.xml` already handle installation of all files in the `robots/` directory, so no changes are needed to those files.
 
 ---
 
@@ -122,12 +94,12 @@ Create `urdf/<robot>.urdf.xacro`:
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="package://<robot>_description/meshes/base_link.stl"/>
+        <mesh filename="package://robot_description/robots/<robot>/meshes/base_link.stl"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://<robot>_description/meshes/base_link.stl"/>
+        <mesh filename="package://robot_description/robots/<robot>/meshes/base_link.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -140,14 +112,14 @@ Create `urdf/<robot>.urdf.xacro`:
   <!-- Add more links and joints... -->
 
   <!-- Include ros2_control (added in Step 3) -->
-  <xacro:include filename="$(find <robot>_description)/urdf/control/<robot>_ros2_control.urdf.xacro"/>
+  <xacro:include filename="$(find robot_description)/robots/<robot>/urdf/control/<robot>_ros2_control.urdf.xacro"/>
 
 </robot>
 ```
 
 ### 2.3 Important URDF Guidelines
 
-1. **Mesh paths:** Use `package://<robot>_description/meshes/...`
+1. **Mesh paths:** Use `package://robot_description/robots/<robot>/meshes/...`
 2. **Inertia:** Required for Gazebo simulation
 3. **Joint limits:** Set realistic limits based on physical robot
 4. **Joint axes:** Use unit vectors (e.g., `0 0 1` for Z-axis)
@@ -156,7 +128,7 @@ Create `urdf/<robot>.urdf.xacro`:
 
 ```bash
 # Check for XML errors
-ros2 run xacro xacro src/robot_arm/<robot>_description/urdf/<robot>.urdf.xacro
+ros2 run xacro xacro src/robot_arm/robot_description/robots/<robot>/urdf/<robot>.urdf.xacro
 
 # Check URDF validity
 ros2 run urdf_parser_plugin check_urdf <generated_urdf>
@@ -520,14 +492,19 @@ The unified `simulation.launch.py` includes:
 
 ```bash
 cd ~/Capstone/MECH490-Capstone
-colcon build --packages-select <robot>_description <robot>_moveit_config
+
+# Source dependencies workspace if you have one
+# source ~/ros2_dependencies_ws/install/setup.bash
+
+# Build your packages
+colcon build --packages-select robot_description robot_moveit_config
 source install/setup.bash
 ```
 
 ### 6.2 Test Visualization
 
 ```bash
-ros2 launch <robot>_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=<robot>
 ```
 
 ### 6.3 Test Gazebo Simulation

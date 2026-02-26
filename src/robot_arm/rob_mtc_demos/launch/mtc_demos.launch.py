@@ -17,7 +17,7 @@ def generate_launch_description():
         LaunchDescription: A complete launch description for the MTC demo system
     """
     # Constants for paths to different files and folders
-    package_name_moveit_config = 'rob_moveit_config'
+    package_name_moveit_config = 'robot_moveit_config'
 
     # Launch configuration variables
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -53,7 +53,7 @@ def generate_launch_description():
         pkg_share_moveit_config = pkg_share_moveit_config_temp.find(package_name_moveit_config)
 
         # Construct file paths using robot name string
-        config_path = os.path.join(pkg_share_moveit_config, 'config')
+        config_path = os.path.join(pkg_share_moveit_config, 'robots', robot_name_str, 'config')
 
         # Define all config file paths
         initial_positions_file_path = os.path.join(config_path, 'initial_positions.yaml')

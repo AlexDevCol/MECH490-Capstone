@@ -10,11 +10,11 @@
   <xacro:arg name="virtual_joint" default="true"/>
 
   <!-- Include Gazebo Parameters 
-  <xacro:include filename="$(find rob_description)/urdf/rob_gazebo.xacro" />-->
+  <xacro:include filename="$(find robot_description)/robots/rob/urdf/rob_gazebo.xacro" />-->
 
   <!-- Include ros2_control Plugins -->
-  <!-- <xacro:include filename="$(find rob_moveit_config)/config/rob_description.ros2_control.xacro" /> 
-  <xacro:include filename="$(find rob_description)/urdf/rob_ros2_control.xacro" />-->
+  <!-- <xacro:include filename="$(find robot_moveit_config)/robots/rob/config/rob_description.ros2_control.xacro" /> 
+  <xacro:include filename="$(find robot_description)/robots/rob/urdf/rob_ros2_control.xacro" />-->
 
   <xacro:if value="$(arg add_world)">
       <link name="world"/>

@@ -49,7 +49,8 @@ ros2 launch robot_gazebo simulation.launch.py \
     yaw:=0.0 &
 
 sleep 15
-ros2 launch ${ROBOT}_moveit_config move_group.launch.py \
+ros2 launch robot_moveit_config move_group.launch.py \
+    robot:=$ROBOT \
     rviz_config_file:=mtc_demos.rviz \
     rviz_config_package:=rob_mtc_demos &
 

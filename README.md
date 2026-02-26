@@ -17,7 +17,7 @@ This project provides a complete robotics software stack including:
 |-------|-----|-------------|--------|
 | **Panda** | 7 | Franka Emika Panda | Stable (Reference) |
 | **Rob** | 5+1 | BCN3D Moveo-based custom robot | Stable |
-| **BB01** | 6 | New capstone robot | Under Construction |
+| **BB01** | 6 | New capstone robot | Fully Integrated |
 
 ## Quick Start
 
@@ -30,19 +30,50 @@ This project provides a complete robotics software stack including:
 
 ### Installation
 
+#### 1. Clone the repository
+
 ```bash
-# Clone the repository
 cd ~/Capstone
 git clone <repository-url> MECH490-Capstone
 cd MECH490-Capstone
+```
 
-# Install dependencies
+#### 2. Set up dependencies workspace (optional but recommended)
+
+For faster builds, move vendored packages to a separate workspace:
+
+```bash
+# Create dependencies workspace
+mkdir -p ~/ros2_dependencies_ws/src
+cd ~/ros2_dependencies_ws/src
+
+# Move vendored packages (if they exist in src/)
+# mv ~/Capstone/MECH490-Capstone/src/moveit_task_constructor .
+# mv ~/Capstone/MECH490-Capstone/src/warehouse_ros_mongo .
+
+# Build dependencies workspace
+cd ~/ros2_dependencies_ws
+colcon build --symlink-install
+source install/setup.bash
+```
+
+#### 3. Build the main workspace
+
+```bash
+cd ~/Capstone/MECH490-Capstone
+
+# Install system dependencies
 rosdep install --from-paths src --ignore-src -r -y
+
+# Source dependencies workspace if you created one
+# source ~/ros2_dependencies_ws/install/setup.bash
 
 # Build
 colcon build --symlink-install
 source install/setup.bash
 ```
+
+**Note:** If vendored packages (`moveit_task_constructor`, `warehouse_ros_mongo`) are in a separate workspace, source that workspace before building this one.
 
 ### Launch Simulation
 
@@ -51,29 +82,23 @@ source install/setup.bash
 ./run_script.sh
 ```
 
-**Direct launch (Rob robot):**
+**Direct launch (any robot):**
 ```bash
 # Terminal 1: Start Gazebo
-ros2 launch robot_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo simulation.launch.py robot:=rob
 
-# Terminal 2: Start MoveIt (after Gazebo loads)
-ros2 launch rob_moveit_config move_group.launch.py
+# Terminal 2: Start MoveIt (after Gazebo loads, ~15s)
+ros2 launch robot_moveit_config move_group.launch.py robot:=rob
 ```
 
-**Direct launch (Panda robot):**
-```bash
-# Terminal 1
-ros2 launch robot_gazebo panda.gazebo.launch.py
-
-# Terminal 2
-ros2 launch panda_moveit_config move_group.launch.py
-```
+Replace `robot:=rob` with `robot:=panda` or `robot:=bb01` for other robots.
 
 ### Visualize Robot Only
 
 ```bash
-ros2 launch rob_description display.launch.py
-ros2 launch panda_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=rob
+ros2 launch robot_description display.launch.py robot:=panda
+ros2 launch robot_description display.launch.py robot:=bb01
 ```
 
 ## Documentation
@@ -103,19 +128,16 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ```
 src/
-├── robot_arm/
-│   ├── panda_description/      # Panda URDF and meshes
-│   ├── rob_description/        # Rob URDF and meshes
-│   ├── bb01_description/       # BB01 URDF and meshes (WIP)
-│   ├── panda_moveit_config/    # Panda MoveIt configuration
-│   ├── rob_moveit_config/      # Rob MoveIt configuration
-│   ├── robot_gazebo/             # Gazebo simulation
-│   ├── rob_bringup/            # Launch scripts
-│   ├── rob_mtc_demos/          # MoveIt Task Constructor demos
-│   └── ...
-├── moveit_task_constructor/    # MTC library (vendored)
-└── warehouse_ros_mongo/        # Motion plan storage (vendored)
+└── robot_arm/
+    ├── robot_description/      # Unified robot descriptions (panda, rob, bb01)
+    ├── robot_moveit_config/    # Unified MoveIt configs (panda, rob, bb01)
+    ├── robot_gazebo/           # Unified Gazebo simulation
+    ├── rob_bringup/            # Launch scripts
+    ├── rob_mtc_demos/          # MoveIt Task Constructor demos
+    └── ...
 ```
+
+**Note:** Vendored packages (`moveit_task_constructor`, `warehouse_ros_mongo`) are typically kept in a separate dependencies workspace for faster builds. See installation instructions above.
 
 ## Running MTC Demos
 
@@ -132,7 +154,7 @@ Available demos: `alternative_path_costs`, `cartesian`, `fallbacks_move_to`, `ik
 ### Building Specific Packages
 
 ```bash
-colcon build --packages-select rob_description rob_moveit_config
+colcon build --packages-select robot_description robot_moveit_config
 ```
 
 ### Clean Build

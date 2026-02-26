@@ -311,7 +311,7 @@
     <xacro:include filename="$(find robot_description)/robots/panda/urdf/control/panda_ros2_control.urdf.xacro" />
     <xacro:panda_ros2_control
     name="PandaSystem"
-    initial_positions_file="$(find panda_moveit_config)/config/initial_positions.yaml"
+    initial_positions_file="$(find robot_moveit_config)/robots/panda/config/initial_positions.yaml"
     ros2_control_hardware_type="gz_ros2_control/GazeboSimSystem"
     use_gazebo="$(arg use_gazebo)"/>
 

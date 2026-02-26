@@ -13,11 +13,27 @@ Welcome to the documentation for the MECH490 Capstone robotic arm control projec
 
 ### Build the Workspace
 
+**If you have dependencies in a separate workspace:**
+
+```bash
+# Source dependencies workspace first (if applicable)
+source ~/ros2_dependencies_ws/install/setup.bash
+
+# Build main workspace
+cd ~/Capstone/MECH490-Capstone
+colcon build --symlink-install
+source install/setup.bash
+```
+
+**If all packages are in this workspace:**
+
 ```bash
 cd ~/Capstone/MECH490-Capstone
 colcon build --symlink-install
 source install/setup.bash
 ```
+
+**Note:** For faster builds, consider moving vendored packages (`moveit_task_constructor`, `warehouse_ros_mongo`) to a separate workspace. See the main [README.md](../README.md) for setup instructions.
 
 ### Launch Simulation
 
@@ -29,32 +45,24 @@ source install/setup.bash
 
 **Option 2: Direct launch commands**
 
-For the Rob (Moveo) robot:
+For any robot (Rob, Panda, or BB01):
 ```bash
 # Terminal 1: Launch Gazebo simulation
-ros2 launch robot_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo simulation.launch.py robot:=rob
 
 # Terminal 2: Launch MoveIt (after Gazebo is ready, ~15s)
-ros2 launch rob_moveit_config move_group.launch.py
+ros2 launch robot_moveit_config move_group.launch.py robot:=rob
 ```
 
-For the Panda robot:
-```bash
-# Terminal 1: Launch Gazebo simulation
-ros2 launch robot_gazebo panda.gazebo.launch.py
-
-# Terminal 2: Launch MoveIt (after Gazebo is ready, ~15s)
-ros2 launch panda_moveit_config move_group.launch.py
-```
+Replace `robot:=rob` with `robot:=panda` or `robot:=bb01` for other robots.
 
 ### Visualize Robot Only (No Simulation)
 
 ```bash
-# Rob robot
-ros2 launch rob_description display.launch.py
-
-# Panda robot
-ros2 launch panda_description display.launch.py
+# Any robot
+ros2 launch robot_description display.launch.py robot:=rob
+ros2 launch robot_description display.launch.py robot:=panda
+ros2 launch robot_description display.launch.py robot:=bb01
 ```
 
 ---
@@ -63,12 +71,9 @@ ros2 launch panda_description display.launch.py
 
 | Package | Description |
 |---------|-------------|
-| `panda_description` | Franka Emika Panda URDF, meshes, and visualization launch files |
-| `rob_description` | Rob (Moveo-based) URDF, meshes, and visualization launch files |
-| `bb01_description` | BB01 robot URDF (under construction) |
-| `panda_moveit_config` | MoveIt 2 configuration for the Panda robot |
-| `rob_moveit_config` | MoveIt 2 configuration for the Rob robot |
-| `robot_gazebo` | Gazebo simulation worlds and launch files for all robots |
+| `robot_description` | Unified robot description package containing URDF, meshes, and visualization launch files for all robots (panda, rob, bb01) |
+| `robot_moveit_config` | Unified MoveIt 2 configuration package for all robots (panda, rob, bb01) |
+| `robot_gazebo` | Gazebo simulation worlds and unified launch files for all robots |
 | `rob_bringup` | Convenience scripts for launching complete systems |
 | `rob_arduino` | Arduino interface for real hardware control |
 | `rob_interfaces` | Custom ROS 2 messages, services, and actions |
@@ -133,14 +138,14 @@ Available MTC demos: `alternative_path_costs`, `cartesian`, `fallbacks_move_to`,
 ### View Robot in RViz Only
 
 ```bash
-ros2 launch rob_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=rob
 ```
 
 ### Check Robot URDF
 
 ```bash
 # Parse and check URDF for errors
-ros2 run xacro xacro src/robot_arm/rob_description/urdf/rob.urdf.xacro
+ros2 run xacro xacro src/robot_arm/robot_description/robots/rob/urdf/rob.urdf.xacro
 ```
 
 ---
@@ -165,4 +170,4 @@ source install/setup.bash
 
 ## Contributing
 
-See the [Parametrization Roadmap](development/parametrization-roadmap.md) for the planned refactoring to eliminate code duplication between robot packages.
+The project uses a unified parametric architecture where all robots share common launch files. See the [Parametrization Roadmap](development/parametrization-roadmap.md) for details on the architecture and [Adding a New Robot](development/adding-new-robot.md) for instructions on integrating new robots.

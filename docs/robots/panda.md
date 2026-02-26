@@ -16,26 +16,37 @@ The Panda robot serves as the reference implementation for testing new features 
 
 ## Package Structure
 
+The Panda robot is part of the unified `robot_description` package:
+
 ```
-src/robot_arm/panda_description/
-├── urdf/
-│   ├── panda.urdf.xacro           # Main robot description
-│   ├── panda.urdf                 # Generated static URDF
-│   ├── panda_gazebo.xacro         # Gazebo-specific configuration
-│   ├── panda.ros2_control.xacro   # ros2_control interface
-│   └── control/
-│       ├── gazebo_sim_ros2_control.urdf.xacro
-│       ├── panda_ros2_control.urdf.xacro
-│       └── panda_hand.ros2_control.xacro
-├── meshes/
-│   ├── visual/                    # DAE files for visualization
-│   └── collision/                 # STL files for collision
-├── launch/
-│   ├── display.launch.py          # Simple RViz visualization
-│   └── robot_state_publisher.launch.py  # Full RSP with options
-└── rviz/
-    ├── display.rviz
-    └── display2.rviz
+src/robot_arm/robot_description/
+└── robots/
+    └── panda/
+        ├── urdf/
+        │   ├── panda.urdf.xacro           # Main robot description
+        │   ├── panda.urdf                 # Generated static URDF
+        │   ├── panda_gazebo.xacro         # Gazebo-specific configuration
+        │   ├── panda.ros2_control.xacro   # ros2_control interface
+        │   └── control/
+        │       ├── gazebo_sim_ros2_control.urdf.xacro
+        │       ├── panda_ros2_control.urdf.xacro
+        │       └── panda_hand.ros2_control.xacro
+        └── meshes/
+            ├── visual/                    # DAE files for visualization
+            └── collision/                 # STL files for collision
+```
+
+MoveIt configuration is in the unified `robot_moveit_config` package:
+
+```
+src/robot_arm/robot_moveit_config/
+└── robots/
+    └── panda/
+        └── config/
+            ├── panda.srdf
+            ├── kinematics.yaml
+            ├── joint_limits.yaml
+            └── ...
 ```
 
 ## URDF Structure
@@ -83,7 +94,7 @@ world
 
 ## MoveIt Configuration
 
-Located in `src/robot_arm/panda_moveit_config/`
+Located in `src/robot_arm/robot_moveit_config/robots/panda/config/`
 
 ### Planning Groups
 
@@ -140,30 +151,31 @@ Located in `src/robot_arm/panda_moveit_config/`
 ### Visualize Robot Only
 
 ```bash
-ros2 launch panda_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=panda
 ```
 
 ### Launch in Gazebo
 
 ```bash
-ros2 launch robot_gazebo panda.gazebo.launch.py
+ros2 launch robot_gazebo simulation.launch.py robot:=panda
 ```
 
 ### Launch with MoveIt
 
 ```bash
 # Terminal 1
-ros2 launch robot_gazebo panda.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo simulation.launch.py robot:=panda use_rviz:=false
 
 # Terminal 2 (after ~15 seconds)
-ros2 launch panda_moveit_config move_group.launch.py
+ros2 launch robot_moveit_config move_group.launch.py robot:=panda
 ```
 
 ### Using Bringup Script
 
 ```bash
 ./run_script.sh
-# Select "Panda Gazebo And Moveit"
+# Select robot: panda
+# Select script: Gazebo And Moveit
 ```
 
 ## Key Differences from Rob
@@ -188,13 +200,15 @@ ros2 launch panda_moveit_config move_group.launch.py
 
 ### MoveIt Config Files
 
+Located in `robot_moveit_config/robots/panda/config/`:
+
 | File | Purpose |
 |------|---------|
-| `config/panda.srdf` | Semantic robot description (groups, poses) |
-| `config/kinematics.yaml` | Kinematics solver configuration |
-| `config/joint_limits.yaml` | Planning joint limits |
-| `config/moveit_controllers.yaml` | MoveIt controller configuration |
-| `config/ros2_controllers.yaml` | ros2_control controller definitions |
+| `panda.srdf` | Semantic robot description (groups, poses) |
+| `kinematics.yaml` | Kinematics solver configuration |
+| `joint_limits.yaml` | Planning joint limits |
+| `moveit_controllers.yaml` | MoveIt controller configuration |
+| `ros2_controllers.yaml` | ros2_control controller definitions |
 
 ## Notes
 

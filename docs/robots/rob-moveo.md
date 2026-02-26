@@ -28,25 +28,36 @@ Our "Rob" implementation extends the base design with:
 
 ## Package Structure
 
+The Rob robot is part of the unified `robot_description` package:
+
 ```
-src/robot_arm/rob_description/
-├── urdf/
-│   ├── rob.urdf.xacro              # Main robot description
-│   ├── rob.urdf                    # Generated static URDF
-│   ├── robot_gazebo.xacro            # Gazebo-specific configuration
-│   ├── rob_ros2_control.xacro      # ros2_control interface
-│   ├── control/
-│   │   ├── gazebo_sim_ros2_control.urdf.xacro
-│   │   └── rob_ros2_control.urdf.xacro
-│   └── sensors/
-│       └── intel_rgbd_cam_d435.urdf.xacro  # Optional camera
-├── meshes/                         # STL mesh files
-├── launch/
-│   ├── display.launch.py
-│   └── robot_state_publisher.launch.py
-└── rviz/
-    ├── display.rviz
-    └── display2.rviz
+src/robot_arm/robot_description/
+└── robots/
+    └── rob/
+        ├── urdf/
+        │   ├── rob.urdf.xacro              # Main robot description
+        │   ├── rob.urdf                    # Generated static URDF
+        │   ├── rob_gazebo.xacro            # Gazebo-specific configuration
+        │   ├── rob_ros2_control.xacro      # ros2_control interface
+        │   ├── control/
+        │   │   ├── gazebo_sim_ros2_control.urdf.xacro
+        │   │   └── rob_ros2_control.urdf.xacro
+        │   └── sensors/
+        │       └── intel_rgbd_cam_d435.urdf.xacro  # Optional camera
+        └── meshes/                         # STL mesh files
+```
+
+MoveIt configuration is in the unified `robot_moveit_config` package:
+
+```
+src/robot_arm/robot_moveit_config/
+└── robots/
+    └── rob/
+        └── config/
+            ├── rob.srdf
+            ├── kinematics.yaml
+            ├── joint_limits.yaml
+            └── ...
 ```
 
 ## URDF Structure
@@ -128,7 +139,7 @@ This virtual joint:
 
 ## MoveIt Configuration
 
-Located in `src/robot_arm/rob_moveit_config/`
+Located in `src/robot_arm/robot_moveit_config/robots/rob/config/`
 
 ### Planning Groups
 
@@ -200,37 +211,38 @@ Located in `src/robot_arm/rob_arduino/`
 ### Visualize Robot Only
 
 ```bash
-ros2 launch rob_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=rob
 ```
 
 ### Launch in Gazebo
 
 ```bash
-ros2 launch robot_gazebo rob.gazebo.launch.py
+ros2 launch robot_gazebo simulation.launch.py robot:=rob
 ```
 
 ### Launch with MoveIt
 
 ```bash
 # Terminal 1
-ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_rviz:=false
 
 # Terminal 2 (after ~15 seconds)
-ros2 launch rob_moveit_config move_group.launch.py
+ros2 launch robot_moveit_config move_group.launch.py robot:=rob
 ```
 
 ### Using Bringup Script
 
 ```bash
 ./run_script.sh
-# Select "Rob Gazebo And Moveit"
+# Select robot: rob
+# Select script: Gazebo And Moveit
 ```
 
 ### Run MTC Demos
 
 ```bash
 # After simulation is running
-ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=cartesian
+ros2 launch rob_mtc_demos mtc_demos.launch.py robot_name:=rob exe:=cartesian
 ```
 
 ## Gripper Mechanism
@@ -275,12 +287,14 @@ When `joint_R_gear` opens (positive rotation):
 
 ### MoveIt Config Files
 
+Located in `robot_moveit_config/robots/rob/config/`:
+
 | File | Purpose |
 |------|---------|
-| `config/rob.srdf` | Planning groups and end effector |
-| `config/kinematics.yaml` | KDL solver configuration |
-| `config/joint_limits.yaml` | Planning limits |
-| `config/moveit_controllers.yaml` | MoveIt controller config |
+| `rob.srdf` | Planning groups and end effector |
+| `kinematics.yaml` | KDL solver configuration |
+| `joint_limits.yaml` | Planning limits |
+| `moveit_controllers.yaml` | MoveIt controller config |
 
 ## Migration to BB01
 

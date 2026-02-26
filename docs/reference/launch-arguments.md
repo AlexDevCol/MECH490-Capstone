@@ -14,72 +14,67 @@ ros2 launch <package> <launch_file> <arg>:=<value> <arg2>:=<value2>
 
 ## Description Package Launch Files
 
-### display.launch.py
+Located in: `robot_description/launch/`
 
-Located in: `panda_description/launch/`, `rob_description/launch/`
+### display.launch.py
 
 Simple visualization launch file.
 
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `model` | string | `<package>/urdf/<robot>.urdf.xacro` | Path to URDF file |
+| Argument | Type | Default | Choices | Description |
+|----------|------|---------|---------|-------------|
+| `robot` | string | `rob` | `panda`, `rob`, `bb01` | Robot to visualize |
 
 **Example:**
 ```bash
-ros2 launch rob_description display.launch.py
-ros2 launch panda_description display.launch.py model:=/path/to/custom.urdf
+ros2 launch robot_description display.launch.py robot:=rob
+ros2 launch robot_description display.launch.py robot:=panda
+ros2 launch robot_description display.launch.py robot:=bb01
 ```
 
 ### robot_state_publisher.launch.py
-
-Located in: `bb01_description/launch/`, `panda_description/launch/`
 
 Full visualization with configurable options.
 
 | Argument | Type | Default | Choices | Description |
 |----------|------|---------|---------|-------------|
-| `robot_name` | string | `panda` | - | Robot name for xacro |
+| `robot` | string | `rob` | `panda`, `rob`, `bb01` | Robot name |
 | `add_world` | bool | `true` | `true`, `false` | Add world link |
 | `use_camera` | bool | `false` | `true`, `false` | Include RGBD camera |
 | `use_gazebo` | bool | `false` | `true`, `false` | Configure for Gazebo |
 | `jsp_gui` | bool | `true` | `true`, `false` | Use joint state publisher GUI |
 | `use_rviz` | bool | `true` | `true`, `false` | Launch RViz |
 | `use_sim_time` | bool | `false` | `true`, `false` | Use simulation time |
-| `urdf_model` | string | (auto) | - | Custom URDF path |
-| `rviz_config_file` | string | (auto) | - | Custom RViz config |
 
 **Example:**
 ```bash
-ros2 launch panda_description robot_state_publisher.launch.py use_gazebo:=true use_rviz:=false
+ros2 launch robot_description robot_state_publisher.launch.py robot:=panda use_gazebo:=true use_rviz:=false
 ```
 
 ---
 
 ## Gazebo Launch Files
 
-### rob.gazebo.launch.py / panda.gazebo.launch.py
+### simulation.launch.py
 
 Located in: `robot_gazebo/launch/`
 
-Full Gazebo simulation launch.
+Unified parametric Gazebo simulation launch for all robots.
 
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `robot_name` | string | `rob`/`panda` | Robot name |
-| `world_file` | string | `pick_and_place_demo.world` | World to load |
-| `use_rviz` | bool | `true` | Launch RViz |
-| `use_sim_time` | bool | `true` | Use simulation time |
-| `use_camera` | bool | `false` | Enable RGBD camera |
-| `use_gazebo` | bool | `true` | Enable Gazebo |
-| `use_robot_state_pub` | bool | `true` | Start RSP |
-| `load_controllers` | bool | `true` | Load ros2_control controllers |
-| `jsp_gui` | bool | `false` | Joint state publisher GUI |
-| `x` | float | `0.0` | Spawn X position (m) |
-| `y` | float | `0.0` | Spawn Y position (m) |
-| `z` | float | `0.1` | Spawn Z position (m) |
-| `roll` | float | `0.0` | Spawn roll (rad) |
-| `pitch` | float | `0.0` | Spawn pitch (rad) |
-| `yaw` | float | `0.0` | Spawn yaw (rad) |
+| Argument | Type | Default | Choices | Description |
+|----------|------|---------|---------|-------------|
+| `robot` | string | `rob` | `panda`, `rob`, `bb01` | Robot to simulate |
+| `world_file` | string | `empty.world` | - | World to load |
+| `use_rviz` | bool | `false` | `true`, `false` | Launch RViz |
+| `use_sim_time` | bool | `true` | `true`, `false` | Use simulation time |
+| `use_camera` | bool | `false` | `true`, `false` | Enable RGBD camera |
+| `use_robot_state_pub` | bool | `true` | `true`, `false` | Start RSP |
+| `load_controllers` | bool | `true` | `true`, `false` | Load ros2_control controllers |
+| `x` | float | `0.0` | - | Spawn X position (m) |
+| `y` | float | `0.0` | - | Spawn Y position (m) |
+| `z` | float | `0.1` | - | Spawn Z position (m) |
+| `roll` | float | `0.0` | - | Spawn roll (rad) |
+| `pitch` | float | `0.0` | - | Spawn pitch (rad) |
+| `yaw` | float | `0.0` | - | Spawn yaw (rad) |
 
 **Available Worlds:**
 - `empty.world` - Empty environment
@@ -89,56 +84,57 @@ Full Gazebo simulation launch.
 
 **Examples:**
 ```bash
-# Basic simulation
-ros2 launch robot_gazebo rob.gazebo.launch.py
+# Basic simulation (Rob robot)
+ros2 launch robot_gazebo simulation.launch.py robot:=rob
 
-# Custom world, no RViz
-ros2 launch robot_gazebo rob.gazebo.launch.py world_file:=house.world use_rviz:=false
+# Panda robot with custom world, no RViz
+ros2 launch robot_gazebo simulation.launch.py robot:=panda world_file:=house.world use_rviz:=false
 
-# Custom spawn position
-ros2 launch robot_gazebo panda.gazebo.launch.py x:=1.0 y:=0.5 z:=0.0
+# BB01 robot with custom spawn position
+ros2 launch robot_gazebo simulation.launch.py robot:=bb01 x:=1.0 y:=0.5 z:=0.0
 
-# With camera enabled
-ros2 launch robot_gazebo rob.gazebo.launch.py use_camera:=true
+# Rob robot with camera enabled
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_camera:=true
 ```
 
 ---
 
 ## MoveIt Launch Files
 
+Located in: `robot_moveit_config/launch/`
+
 ### move_group.launch.py
 
-Located in: `rob_moveit_config/launch/`, `panda_moveit_config/launch/`
+Unified parametric MoveIt motion planning server.
 
-MoveIt motion planning server.
-
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `robot_name` | string | `rob`/`panda` | Robot name |
-| `use_sim_time` | bool | `true` | Use simulation time |
-| `use_rviz` | bool | `true` | Launch MoveIt RViz |
-| `rviz_config_file` | string | `move_group.rviz` | RViz config file |
-| `rviz_config_package` | string | `*_moveit_config` | Package containing RViz config |
+| Argument | Type | Default | Choices | Description |
+|----------|------|---------|---------|-------------|
+| `robot` | string | `rob` | `panda`, `rob`, `bb01` | Robot name |
+| `use_sim_time` | bool | `true` | `true`, `false` | Use simulation time |
+| `use_rviz` | bool | `true` | `true`, `false` | Launch MoveIt RViz |
+| `rviz_config_file` | string | `move_group.rviz` | - | RViz config file |
+| `rviz_config_package` | string | `robot_moveit_config` | - | Package containing RViz config |
 
 **Example:**
 ```bash
-ros2 launch rob_moveit_config move_group.launch.py
-ros2 launch panda_moveit_config move_group.launch.py use_rviz:=false
+ros2 launch robot_moveit_config move_group.launch.py robot:=rob
+ros2 launch robot_moveit_config move_group.launch.py robot:=panda use_rviz:=false
+ros2 launch robot_moveit_config move_group.launch.py robot:=bb01
 ```
 
 ### load_ros2_controllers.launch.py
 
-Located in: `rob_moveit_config/launch/`, `panda_moveit_config/launch/`
+Unified parametric controller spawning for ros2_control.
 
-Controller spawning for ros2_control.
-
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `use_sim_time` | bool | `true` | Use simulation time |
+| Argument | Type | Default | Choices | Description |
+|----------|------|---------|---------|-------------|
+| `robot` | string | `rob` | `panda`, `rob`, `bb01` | Robot name |
+| `use_sim_time` | bool | `true` | `true`, `false` | Use simulation time |
 
 **Example:**
 ```bash
-ros2 launch rob_moveit_config load_ros2_controllers.launch.py
+ros2 launch robot_moveit_config load_ros2_controllers.launch.py robot:=rob
+ros2 launch robot_moveit_config load_ros2_controllers.launch.py robot:=panda
 ```
 
 ---
@@ -153,8 +149,8 @@ MoveIt Task Constructor demonstrations.
 
 | Argument | Type | Default | Choices | Description |
 |----------|------|---------|---------|-------------|
-| `robot_name` | string | `rob` | - | Robot name |
-| `use_sim_time` | bool | `true` | - | Use simulation time |
+| `robot_name` | string | `rob` | `panda`, `rob`, `bb01` | Robot name |
+| `use_sim_time` | bool | `true` | `true`, `false` | Use simulation time |
 | `exe` | string | `alternative_path_costs` | See below | Demo executable |
 
 **Available Demos (`exe` choices):**
@@ -166,8 +162,8 @@ MoveIt Task Constructor demonstrations.
 
 **Example:**
 ```bash
-ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=cartesian
-ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=modular robot_name:=rob
+ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=cartesian robot_name:=rob
+ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=modular robot_name:=panda
 ```
 
 ---
@@ -178,16 +174,16 @@ ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=modular robot_name:=rob
 
 ```bash
 # Simulation (default)
-ros2 launch robot_gazebo rob.gazebo.launch.py use_sim_time:=true
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_sim_time:=true
 
 # Real hardware (no Gazebo)
-ros2 launch rob_description robot_state_publisher.launch.py use_gazebo:=false use_sim_time:=false
+ros2 launch robot_description robot_state_publisher.launch.py robot:=rob use_gazebo:=false use_sim_time:=false
 ```
 
 ### Headless Operation (No GUI)
 
 ```bash
-ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_rviz:=false
 ```
 
 ### Debug Mode
@@ -241,20 +237,21 @@ flowchart LR
 ### Start Simulation
 
 ```bash
-# Rob + MoveIt
-ros2 launch robot_gazebo rob.gazebo.launch.py
-ros2 launch rob_moveit_config move_group.launch.py
+# Any robot + MoveIt
+ros2 launch robot_gazebo simulation.launch.py robot:=rob
+ros2 launch robot_moveit_config move_group.launch.py robot:=rob
 
 # Panda + MoveIt  
-ros2 launch robot_gazebo panda.gazebo.launch.py
-ros2 launch panda_moveit_config move_group.launch.py
+ros2 launch robot_gazebo simulation.launch.py robot:=panda
+ros2 launch robot_moveit_config move_group.launch.py robot:=panda
 ```
 
 ### Visualization Only
 
 ```bash
-ros2 launch rob_description display.launch.py
-ros2 launch panda_description display.launch.py
+ros2 launch robot_description display.launch.py robot:=rob
+ros2 launch robot_description display.launch.py robot:=panda
+ros2 launch robot_description display.launch.py robot:=bb01
 ```
 
 ### Run Demo
@@ -267,11 +264,11 @@ ros2 launch rob_mtc_demos mtc_demos.launch.py exe:=cartesian
 
 ```bash
 # Headless simulation for CI
-ros2 launch robot_gazebo rob.gazebo.launch.py use_rviz:=false
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_rviz:=false
 
 # Empty world for testing
-ros2 launch robot_gazebo rob.gazebo.launch.py world_file:=empty.world
+ros2 launch robot_gazebo simulation.launch.py robot:=rob world_file:=empty.world
 
 # With depth camera
-ros2 launch robot_gazebo rob.gazebo.launch.py use_camera:=true
+ros2 launch robot_gazebo simulation.launch.py robot:=rob use_camera:=true
 ```
