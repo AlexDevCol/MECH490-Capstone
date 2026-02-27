@@ -1,19 +1,36 @@
 #!/bin/bash
-# Launch Gazebo + MoveIt + MoveIt Servo for any robot, then run keyboard control.
+# Launch Gazebo + MoveIt + MoveIt Servo for any robot, then run control interface.
 #
-# Usage: ./servo.sh [robot]
+# Usage: ./servo.sh [robot] [--gui]
 #   robot: panda, rob (default: bb01), or bb01
+#   --gui : Launch the tkinter GUI instead of the terminal keyboard node
 #
 # This script:
 #   1. Launches Gazebo simulation in the background
 #   2. Launches MoveIt move_group in the background (after delay)
 #   3. Launches MoveIt Servo node in the background (after delay)
-#   4. Runs keyboard_servo_node in the FOREGROUND so it captures stdin
+#   4. Runs keyboard_servo_node (default) or servo_gui.py (--gui) for control
 #
 # The keyboard node starts in JOINT JOG mode so you can jog the arm
 # away from any singular position before switching to Twist mode (press 't').
+# The GUI provides the same controls with clickable buttons and a pause/resume feature.
 
-ROBOT=${1:-bb01}
+# ── Parse arguments ──────────────────────────────────────────────────────────
+USE_GUI=false
+ROBOT=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --gui)
+            USE_GUI=true
+            ;;
+        *)
+            ROBOT="$arg"
+            ;;
+    esac
+done
+
+ROBOT=${ROBOT:-bb01}
 
 # Validate robot selection
 if [[ ! "$ROBOT" =~ ^(panda|rob|bb01)$ ]]; then
@@ -25,7 +42,7 @@ cleanup() {
     echo ""
     echo "Cleaning up..."
     sleep 2.0
-    pkill -9 -f "ros2|gazebo|gz|rviz2|robot_state_publisher|joint_state_publisher|moveit|move_group|servo_node|keyboard_servo_node|joy_to_servo_node|joy_node"
+    pkill -9 -f "ros2|gazebo|gz|rviz2|robot_state_publisher|joint_state_publisher|moveit|move_group|servo_node|keyboard_servo_node|joy_to_servo_node|joy_node|servo_gui"
 }
 
 # Set up cleanup trap
@@ -33,6 +50,11 @@ trap 'cleanup' SIGINT SIGTERM
 
 echo "============================================"
 echo " MoveIt Servo Launch for: $ROBOT"
+if $USE_GUI; then
+    echo " Control: Tkinter GUI"
+else
+    echo " Control: Keyboard (terminal)"
+fi
 echo "============================================"
 
 # Step 1: Launch Gazebo simulation
@@ -75,24 +97,45 @@ ros2 launch robot_moveit_config servo.launch.py \
     use_keyboard:=false \
     use_xbox:=false &
 
-# Step 4: Wait for Servo, then launch keyboard control in foreground
+# Step 4: Wait for Servo, then launch control interface
 sleep 5
-echo "[4/4] Launching keyboard control (foreground)..."
-echo ""
-echo "============================================"
-echo " Keyboard control is active!"
-echo " Start with Joint Jog mode (1-6 keys)"
-echo " Press 't' to switch to Twist mode"
-echo " Press 'q' to quit"
-echo "============================================"
-echo ""
 
-ros2 run rob_cpp_pkg keyboard_servo_node \
-    --ros-args \
-    -p planning_frame:=world \
-    -p use_sim_time:=true \
-    -p cartesian_speed_scale:=0.5 \
-    -p joint_speed_scale:=0.5
+if $USE_GUI; then
+    echo "[4/4] Launching Servo GUI..."
+    echo ""
+    echo "============================================"
+    echo " GUI is launching."
+    echo " Use buttons to jog, switch modes, and"
+    echo " pause/resume servo (to use MoveIt planning)."
+    echo " Close the window to quit."
+    echo "============================================"
+    echo ""
 
-# If keyboard node exits, clean up everything
+    # Find the script relative to this script's location
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    python3 "$SCRIPT_DIR/servo_gui.py" \
+        --ros-args \
+        -p planning_frame:=world \
+        -p use_sim_time:=true \
+        -p speed:=0.5
+else
+    echo "[4/4] Launching keyboard control (foreground)..."
+    echo ""
+    echo "============================================"
+    echo " Keyboard control is active!"
+    echo " Start with Joint Jog mode (1-6 keys)"
+    echo " Press 't' to switch to Twist mode"
+    echo " Press 'q' to quit"
+    echo "============================================"
+    echo ""
+
+    ros2 run rob_cpp_pkg keyboard_servo_node \
+        --ros-args \
+        -p planning_frame:=world \
+        -p use_sim_time:=true \
+        -p cartesian_speed_scale:=0.5 \
+        -p joint_speed_scale:=0.5
+fi
+
+# If control node exits, clean up everything
 cleanup

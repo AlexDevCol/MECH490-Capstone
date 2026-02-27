@@ -102,6 +102,7 @@ ros2 launch robot_description display.launch.py robot:=bb01
 ### Development
 - [Adding a New Robot](development/adding-new-robot.md) - Step-by-step guide for integrating new robots
 - [Parametrization Roadmap](development/parametrization-roadmap.md) - Plan for consolidating duplicate packages
+- [MoveIt Servo GUI](development/moveit-servo-gui.md) - Tkinter GUI for real-time servo jog control with pause/resume
 
 ### ESP32
 - [ESP32 micro-ROS Integration](esp32/README.md) - ESP32 servo control with micro-ROS
