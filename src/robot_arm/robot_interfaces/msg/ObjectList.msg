@@ -6,4 +6,4 @@
 std_msgs/Header header
 
 # Array of detected objects
-rob_interfaces/DetectedObject[] objects
+robot_interfaces/DetectedObject[] objects
