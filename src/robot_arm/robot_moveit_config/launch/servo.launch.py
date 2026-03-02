@@ -62,6 +62,7 @@ def generate_launch_description():
 
     # Launch configuration variables
     robot = LaunchConfiguration('robot')
+    use_gazebo = LaunchConfiguration('use_gazebo')
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_xbox = LaunchConfiguration('use_xbox')
 
@@ -80,10 +81,15 @@ def generate_launch_description():
         default_value='',
         description='Name of the robot (defaults to robot argument value)')
 
+    declare_use_gazebo_cmd = DeclareLaunchArgument(
+        name='use_gazebo',
+        default_value='true',
+        description='Use Gazebo simulation if true, real hardware if false')
+
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         name='use_sim_time',
         default_value='true',
-        description='Use simulation (Gazebo) clock if true')
+        description='Use simulation (Gazebo) clock if true. Should match use_gazebo parameter.')
 
     declare_use_xbox_cmd = DeclareLaunchArgument(
         name='use_xbox',
@@ -143,10 +149,12 @@ def generate_launch_description():
         urdf_xacro_path = os.path.join(
             pkg_share_description, 'robots', robot_str, 'urdf', f'{robot_str}.urdf.xacro'
         )
+        # Get use_gazebo value from context
+        use_gazebo_str = use_gazebo.perform(context)
         robot_description_content = ParameterValue(
             Command(['xacro ', urdf_xacro_path,
                      ' add_world:=true',
-                     ' use_gazebo:=true',
+                     f' use_gazebo:={use_gazebo_str}',
                      f' robot_name:={robot_name_str}']),
             value_type=str
         )
@@ -249,6 +257,7 @@ def generate_launch_description():
     # Add the launch arguments
     ld.add_action(declare_robot_cmd)
     ld.add_action(declare_robot_name_cmd)
+    ld.add_action(declare_use_gazebo_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_use_xbox_cmd)
     ld.add_action(declare_use_keyboard_cmd)

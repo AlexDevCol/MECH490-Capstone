@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launch file for real BB01 robot hardware bringup.
+Launch file for real BB01 robot hardware bringup with MoveIt Servo enabled.
 
 This launch file starts all necessary nodes for operating the BB01 robot
 with real hardware (ESP32 via micro-ROS), including:
@@ -9,10 +9,14 @@ with real hardware (ESP32 via micro-ROS), including:
 - Sequential controller loading (joint_state_broadcaster -> arm_controller)
 - micro_ros_agent (serial bridge to ESP32)
 - MoveIt move_group
+- MoveIt Servo node (enabled by default)
 - Optional RViz (via move_group.launch.py with proper MoveIt configuration)
 
 Usage:
-    ros2 launch rob_bringup real_robot.launch.py [robot:=bb01] [use_rviz:=true] [port:=/dev/ttyUSB0]
+    ros2 launch rob_bringup real_robot_with_servo.launch.py [robot:=bb01] [use_rviz:=true] [port:=/dev/ttyUSB0] [use_servo:=true]
+
+Note: The servo GUI (servo_gui.py) should be launched separately in another terminal:
+    ros2 run rob_bringup servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=false -p speed:=0.5
 
 :author: MECH490-Capstone Team
 :date: February 2026
@@ -38,7 +42,7 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    """Generate launch description for real robot bringup."""
+    """Generate launch description for real robot bringup with servo."""
 
     # Declare launch arguments
     declare_robot_cmd = DeclareLaunchArgument(
@@ -62,8 +66,8 @@ def generate_launch_description():
 
     declare_use_servo_cmd = DeclareLaunchArgument(
         name='use_servo',
-        default_value='false',
-        description='Whether to start MoveIt Servo node'
+        default_value='true',
+        description='Whether to start MoveIt Servo node (default: true)'
     )
 
     # Use OpaqueFunction to configure launch based on robot selection

@@ -7,10 +7,14 @@ with joint jog, Cartesian twist, mode switching, speed control, and
 servo pause/resume (to hand control back to MoveIt planning).
 
 Usage:
-    ros2 run rob_bringup servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=true
+    # For Gazebo simulation:
+    ros2 run rob_bringup servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=true -p speed:=0.5
+    
+    # For real robot:
+    ros2 run rob_bringup servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=false -p speed:=0.5
 
     Or directly:
-    python3 servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=true
+    python3 servo_gui.py --ros-args -p planning_frame:=world -p use_sim_time:=true -p speed:=0.5
 
 :author: MECH490-Capstone Team
 :date: February 2026
