@@ -10,7 +10,7 @@ todos:
     status: done
   - id: esp32-validate
     content: Validate ESP32 receives Float64MultiArray from host via micro-ROS agent (ros2 topic pub)
-    status: pending
+    status: done
     dependencies:
       - esp32-firmware
   - id: esp32-feedback
@@ -20,26 +20,31 @@ todos:
       - esp32-validate
   - id: hw-interface-pkg
     content: Create robot_hardware package with TopicBasedSystem hardware interface plugin
-    status: pending
+    status: done
     dependencies:
       - esp32-validate
   - id: urdf-update
     content: Update bb01_ros2_control.urdf.xacro to select hardware plugin based on use_gazebo param
-    status: pending
+    status: done
     dependencies:
       - hw-interface-pkg
   - id: launch-real
     content: Create real_robot.launch.py for non-Gazebo hardware bringup
-    status: pending
+    status: done
     dependencies:
       - hw-interface-pkg
       - urdf-update
   - id: test-end-to-end
     content: "Test full pipeline: MoveIt -> arm_controller -> TopicBasedSystem -> micro-ROS -> ESP32"
-    status: pending
+    status: done
     dependencies:
       - esp32-feedback
       - launch-real
+  - id: fix-serial-transport
+    content: Fix micro-ROS serial transport buffer overflow by throttling commands to 10Hz and optimizing QoS
+    status: done
+    dependencies:
+      - test-end-to-end
 ---
 
 # Arduino Hardware Integration: MoveIt to ESP32 via micro-ROS
@@ -363,3 +368,14 @@ Plan a trajectory in MoveIt/RViz and execute. Confirm the ESP32 receives the int
 | `bb01_ros2_control.urdf.xacro` | Modify | 2b |
 
 | `rob_bringup/launch/real_robot.launch.py` | Create | 3a |
+
+## Post-Implementation Fix
+
+After initial end-to-end testing revealed that MoveIt trajectories executed successfully but the physical robot never moved, we identified and fixed a critical micro-ROS serial transport buffer overflow issue.
+
+**See:** [`microros_serial_transport_fix.md`](microros_serial_transport_fix.md) for complete details.
+
+**Summary:**
+- **Problem:** `TopicBasedSystem::write()` was called at 100 Hz, flooding the 115200 baud serial link
+- **Solution:** Throttled command publishing to 10 Hz and switched feedback subscriber to BEST_EFFORT QoS
+- **Result:** Stable communication, robot executes trajectories correctly, feedback flows at expected 5 Hz rate
