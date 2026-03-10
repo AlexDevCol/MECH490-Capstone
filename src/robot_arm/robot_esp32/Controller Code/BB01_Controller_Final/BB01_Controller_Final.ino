@@ -52,6 +52,7 @@
 #include <rclc/executor.h>
 
 #include <std_msgs/msg/float64_multi_array.h>
+#include <std_msgs/msg/int32.h>
 #include <ESP32Servo.h>
 
 // ─────────────────────────────────────────────
@@ -96,6 +97,22 @@
 
 #define NUM_JOINTS 6
 
+// ─────────────────────────────────────────────
+//  Joint Position Limits (OUTPUT shaft, degrees)
+// ─────────────────────────────────────────────
+//  Minimum and maximum joint positions in degrees.
+//  These are converted to radians and steps in setup().
+//  Motion beyond these limits will be prevented.
+
+// Joint limits: [min_deg, max_deg] for each joint
+static const float joint_min_deg[NUM_JOINTS] = {
+  -90.0, -90.0, -90.0, -90.0, -90.0, -90.0
+};
+
+static const float joint_max_deg[NUM_JOINTS] = {
+  90.0, 90.0, 90.0, 90.0, 90.0, 90.0
+};
+
 // Steps per motor revolution (driver microstep setting)
 static const float steps_per_rev[NUM_JOINTS] = {
   800.0, 800.0, 800.0, 800.0, 800.0, 800.0
@@ -130,10 +147,14 @@ static const float max_accel_rad[NUM_JOINTS] = {
 //  steps_per_radian = (steps_per_rev * gear_ratio) / (2 * PI)
 //  max_speed_steps  = max_velocity_rad * steps_per_radian
 //  max_accel_steps  = max_accel_rad    * steps_per_radian
+//  joint_min_steps  = joint_min_deg * (PI/180) * steps_per_radian
+//  joint_max_steps  = joint_max_deg * (PI/180) * steps_per_radian
 
 static float steps_per_radian[NUM_JOINTS];
 static float max_speed_steps[NUM_JOINTS];
 static float max_accel_steps[NUM_JOINTS];
+static long joint_min_steps[NUM_JOINTS];  // Joint limits in steps (from home position)
+static long joint_max_steps[NUM_JOINTS];  // Joint limits in steps (from home position)
 
 // Debug / profiling helpers (ROS topic based, no Serial)
 // Note: last_debug_ms is now local to ros_communications_task() to avoid cross-core access
@@ -164,7 +185,7 @@ struct StepperMotor {
 };
 
 // Forward declaration
-void updateStepper(StepperMotor& m);
+void updateStepper(StepperMotor& m, int joint_idx);
 
 // ─────────────────────────────────────────────
 //  Stepper Motor instances
@@ -176,17 +197,24 @@ static StepperMotor motors[NUM_JOINTS];
 //  Servo (gripper)
 // ─────────────────────────────────────────────
 
+// Initial gripper position (degrees, 0-180)
+#define GRIPPER_INITIAL_ANGLE 90
+
 Servo gripper;
+// Volatile target angle set by Core 0 (ROS callback), read by Core 1 (loop())
+volatile int gripper_target_angle = GRIPPER_INITIAL_ANGLE;
 
 // ─────────────────────────────────────────────
 //  micro-ROS objects
 // ─────────────────────────────────────────────
 
 rcl_subscription_t sub_joint_cmd;
+rcl_subscription_t sub_gripper_cmd;
 rcl_publisher_t    pub_joint_fb;
 
 std_msgs__msg__Float64MultiArray msg_joint_cmd;
 std_msgs__msg__Float64MultiArray msg_joint_fb;
+std_msgs__msg__Int32 msg_gripper_cmd;
 
 // Pre-allocated backing arrays for the Float64MultiArray data fields.
 // micro-ROS requires static allocation — no malloc at runtime.
@@ -213,10 +241,31 @@ TaskHandle_t RosTaskHandle;
 // Uses per-step displacement-based kinematics for loop-rate-independent behavior.
 // Handles mid-flight target changes gracefully by computing braking distance
 // and smoothly decelerating/reversing when needed.
-void updateStepper(StepperMotor& m) {
+// Enforces joint position limits to prevent motion beyond physical constraints.
+void updateStepper(StepperMotor& m, int joint_idx) {
   // Read target position (volatile - may be updated by Core 0)
   volatile long target = m.target_pos;
   volatile long current = m.current_pos;
+  
+  // Enforce joint limits: clamp target to valid range
+  if (target < joint_min_steps[joint_idx]) {
+    target = joint_min_steps[joint_idx];
+    m.target_pos = target;  // Update volatile target to clamped value
+  }
+  if (target > joint_max_steps[joint_idx]) {
+    target = joint_max_steps[joint_idx];
+    m.target_pos = target;  // Update volatile target to clamped value
+  }
+  
+  // Safety: also clamp current position if it somehow goes beyond limits
+  if (current < joint_min_steps[joint_idx]) {
+    current = joint_min_steps[joint_idx];
+    m.current_pos = current;
+  }
+  if (current > joint_max_steps[joint_idx]) {
+    current = joint_max_steps[joint_idx];
+    m.current_pos = current;
+  }
   
   // If at target, stop
   if (current == target) {
@@ -410,6 +459,23 @@ void joint_cmd_callback(const void *msgin) {
 }
 
 // ─────────────────────────────────────────────
+//  Subscription callback — gripper commands
+// ─────────────────────────────────────────────
+
+void gripper_cmd_callback(const void *msgin) {
+  const std_msgs__msg__Int32 *msg =
+      (const std_msgs__msg__Int32 *)msgin;
+
+  // Clamp angle to valid servo range (0-180 degrees)
+  int angle = msg->data;
+  if (angle < 0) angle = 0;
+  if (angle > 180) angle = 180;
+
+  // Set volatile target (Core 1 will read this and actuate)
+  gripper_target_angle = angle;
+}
+
+// ─────────────────────────────────────────────
 //  Timer callback — publish feedback
 // ─────────────────────────────────────────────
 
@@ -443,6 +509,12 @@ void setup() {
     steps_per_radian[i] = (steps_per_rev[i] * gear_ratio[i]) / (2.0 * PI);
     max_speed_steps[i]  = max_velocity_rad[i] * steps_per_radian[i];
     max_accel_steps[i]  = max_accel_rad[i]    * steps_per_radian[i];
+    
+    // Convert joint limits from degrees to steps (relative to home position at 0)
+    float min_rad = joint_min_deg[i] * (PI / 180.0);
+    float max_rad = joint_max_deg[i] * (PI / 180.0);
+    joint_min_steps[i] = (long)(min_rad * steps_per_radian[i]);
+    joint_max_steps[i] = (long)(max_rad * steps_per_radian[i]);
 
     // Initialise debug tracking
     last_pos_debug[i] = 0;
@@ -478,6 +550,7 @@ void setup() {
   ESP32PWM::allocateTimer(2);
   ESP32PWM::allocateTimer(3);
   gripper.attach(SERVO_PIN, 500, 2400);
+  gripper.write(GRIPPER_INITIAL_ANGLE);  // Initialize to default position
 
   // Allow hardware to stabilise before micro-ROS init
   delay(2000);
@@ -513,6 +586,13 @@ void setup() {
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64MultiArray),
       "/joint_position_commands"));
 
+  // --- Subscriber: /gripper_angle ---
+  RCCHECK(rclc_subscription_init_default(
+      &sub_gripper_cmd,
+      &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+      "/gripper_angle"));
+
   // --- Publisher: /joint_position_feedback ---
   RCCHECK(rclc_publisher_init_default(
       &pub_joint_fb,
@@ -534,11 +614,14 @@ void setup() {
       RCL_MS_TO_NS(FEEDBACK_PERIOD_MS),
       feedback_timer_callback));
 
-  // --- Executor: 1 subscription + 1 timer ---
-  RCCHECK(rclc_executor_init(&executor, &support.context, 2, &allocator));
+  // --- Executor: 2 subscriptions + 1 timer ---
+  RCCHECK(rclc_executor_init(&executor, &support.context, 3, &allocator));
   RCCHECK(rclc_executor_add_subscription(
       &executor, &sub_joint_cmd, &msg_joint_cmd,
       &joint_cmd_callback, ON_NEW_DATA));
+  RCCHECK(rclc_executor_add_subscription(
+      &executor, &sub_gripper_cmd, &msg_gripper_cmd,
+      &gripper_cmd_callback, ON_NEW_DATA));
   RCCHECK(rclc_executor_add_timer(&executor, &fb_timer));
   
   // --- Create FreeRTOS task for ROS communications on Core 0 ---
@@ -565,7 +648,15 @@ void loop() {
   
   // Update all 6 stepper motors
   for (int i = 0; i < NUM_JOINTS; i++) {
-    updateStepper(motors[i]);
+    updateStepper(motors[i], i);
+  }
+
+  // ── Gripper actuation: read target from Core 0 and update servo ──
+  static int last_gripper_angle = -1;  // Track last set angle to avoid redundant writes
+  volatile int gripper_target = gripper_target_angle;  // Read volatile variable (set by Core 0)
+  if (gripper_target != last_gripper_angle) {
+    gripper.write(gripper_target);
+    last_gripper_angle = gripper_target;
   }
 
   // ── LED: turn off when all joints have reached their targets ──

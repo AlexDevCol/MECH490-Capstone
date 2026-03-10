@@ -30,6 +30,7 @@ from geometry_msgs.msg import TwistStamped
 from control_msgs.msg import JointJog
 from moveit_msgs.srv import ServoCommandType
 from std_srvs.srv import SetBool
+from std_msgs.msg import Int32
 
 # ── Constants ────────────────────────────────────────────────────────────────
 JOINT_NAMES = ["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
@@ -71,6 +72,9 @@ class ServoGuiNode(Node):
         )
         self.joint_pub = self.create_publisher(
             JointJog, "/servo_node/delta_joint_cmds", 10
+        )
+        self.gripper_pub = self.create_publisher(
+            Int32, "/gripper_angle", 10
         )
 
         # Service clients
@@ -151,6 +155,12 @@ class ServoGuiNode(Node):
         msg.joint_names = [JOINT_NAMES[joint_idx]]
         msg.velocities = [direction * self.speed]
         self.joint_pub.publish(msg)
+
+    def publish_gripper_angle(self, angle: int):
+        """Publish gripper angle command (0-180 degrees)."""
+        msg = Int32()
+        msg.data = max(0, min(180, angle))  # Clamp to valid range
+        self.gripper_pub.publish(msg)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -322,6 +332,63 @@ class ServoGui:
         )
         self.speed_label.pack(side="left")
 
+        # ── Gripper control section ──────────────────────────────────────
+        gripper_frame = tk.LabelFrame(
+            self.root, text="  Gripper Control  ", bg=BG_SECTION, fg=ACCENT,
+            font=("Helvetica", 11, "bold"), relief="groove", bd=1,
+        )
+        gripper_frame.pack(fill="x", padx=10, pady=4)
+
+        # Current angle display
+        angle_display_frame = tk.Frame(gripper_frame, bg=BG_SECTION)
+        angle_display_frame.pack(fill="x", padx=6, pady=4)
+
+        tk.Label(
+            angle_display_frame, text="Angle:", width=8, anchor="w",
+            bg=BG_SECTION, fg=FG, font=("Helvetica", 11),
+        ).pack(side="left")
+
+        self.gripper_angle_var = tk.IntVar(value=90)
+        self.gripper_angle_label = tk.Label(
+            angle_display_frame, text="90°", width=6,
+            bg=BG_SECTION, fg=YELLOW, font=("Helvetica", 12, "bold"),
+        )
+        self.gripper_angle_label.pack(side="left", padx=4)
+
+        # Slider
+        slider_frame = tk.Frame(gripper_frame, bg=BG_SECTION)
+        slider_frame.pack(fill="x", padx=6, pady=4)
+
+        tk.Label(
+            slider_frame, text="0°", width=4, anchor="w",
+            bg=BG_SECTION, fg=FG, font=("Helvetica", 9),
+        ).pack(side="left")
+
+        self.gripper_slider = ttk.Scale(
+            slider_frame, from_=0, to=180, orient="horizontal",
+            variable=self.gripper_angle_var, command=self._on_gripper_slider_change,
+        )
+        self.gripper_slider.pack(side="left", fill="x", expand=True, padx=6)
+
+        tk.Label(
+            slider_frame, text="180°", width=4, anchor="e",
+            bg=BG_SECTION, fg=FG, font=("Helvetica", 9),
+        ).pack(side="left")
+
+        # Preset buttons
+        preset_frame = tk.Frame(gripper_frame, bg=BG_SECTION)
+        preset_frame.pack(fill="x", padx=6, pady=4)
+
+        preset_angles = [0, 45, 90, 135, 180]
+        for angle in preset_angles:
+            btn = tk.Button(
+                preset_frame, text=f"{angle}°", width=6,
+                command=lambda a=angle: self._on_gripper_preset(a),
+                bg=BTN_BG, fg=FG, activebackground=BTN_ACTIVE,
+                font=("Helvetica", 9, "bold"), relief="flat",
+            )
+            btn.pack(side="left", padx=2)
+
         # ── Status bar ───────────────────────────────────────────────────
         self.status_var = tk.StringVar(value="")
         self.status_bar = tk.Label(
@@ -468,6 +535,19 @@ class ServoGui:
     def _on_speed_change(self, val):
         self.node.speed = float(val)
         self.speed_label.configure(text=f"{self.node.speed:.2f}")
+
+    # ── Gripper control ──────────────────────────────────────────────────
+    def _on_gripper_slider_change(self, val):
+        angle = int(float(val))
+        self.gripper_angle_var.set(angle)
+        self.gripper_angle_label.configure(text=f"{angle}°")
+        self.node.publish_gripper_angle(angle)
+
+    def _on_gripper_preset(self, angle: int):
+        self.gripper_angle_var.set(angle)
+        self.gripper_slider.set(angle)
+        self.gripper_angle_label.configure(text=f"{angle}°")
+        self.node.publish_gripper_angle(angle)
 
     # ── Status bar ───────────────────────────────────────────────────────
     def _update_status(self):
