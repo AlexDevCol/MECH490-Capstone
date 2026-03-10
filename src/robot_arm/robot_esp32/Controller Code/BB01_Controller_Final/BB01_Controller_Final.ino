@@ -2,11 +2,23 @@
  * BB01_Controller.ino
  *
  * ESP32 micro-ROS firmware for the BB01 6-DOF robot arm.
+
+ run 
+  ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 --baudrate 115200
+  ros2 topic pub --once /joint_position_commands std_msgs/msg/Float64MultiArray   "{data: [1.5, 0.5, 0.5, 0.5, 0.5, -1.5]}"
+  ros2 topic echo /joint_position_feedback
+
+ *
+ * Dual-Core FreeRTOS Architecture:
+ *   - Core 0 (ROS Manager): Handles all micro-ROS communications (subscription,
+ *     feedback publishing, debug publishing) via a dedicated FreeRTOS task.
+ *   - Core 1 (Stepper Worker): Tight loop() executes updateStepper() for all 6
+ *     joints with zero blocking, ensuring smooth stepper pulse timing.
  *
  * Subscribes to /joint_position_commands (Float64MultiArray) — 6 joint
  * positions in radians — converts them to stepper steps and drives six
  * stepper motors through ULN2803A Darlington buffers in common-anode
- * wiring using a custom trapezoidal velocity profile driver.
+ * wiring using a braking-distance-aware trapezoidal velocity profile driver.
  *
  * Publishes current joint positions on /joint_position_feedback
  * (Float64MultiArray) in radians, allowing the host-side ros2_control
@@ -18,6 +30,17 @@
  *   - 1x servo (gripper) on IO4
  *   - Shared ENA on IO16
  *   - Status LED on IO2
+ *
+ * Thread Safety:
+ *   - motors[i].target_pos and motors[i].current_pos are marked volatile
+ *     for safe cross-core access (Core 0 writes target_pos, Core 1 reads it;
+ *     Core 1 writes current_pos, Core 0 reads it).
+ *   - On ESP32 (Xtensa), 32-bit aligned volatile reads/writes are hardware-atomic.
+ *
+ * Timing Notes:
+ *   - micros() wraps every ~71.6 minutes. Unsigned subtraction handles wrap-around
+ *     correctly (e.g., if now_us=10 and last_step_us=4294967290, then 10-4294967290=16).
+ *   - millis() wraps every ~49 days, also handled correctly by unsigned arithmetic.
  */
 
 #include <micro_ros_arduino.h>
@@ -93,7 +116,7 @@ static const float gear_ratio[NUM_JOINTS] = {
 // Maximum output velocity per joint (rad/s)
 // Enforced by per-step kinematic speed updates.
 static const float max_velocity_rad[NUM_JOINTS] = {
-  0.3, 0.3, 0.3, 0.3, 0.3, 0.3
+  0.3, 0.15, 0.3, 0.3, 0.3, 0.3
 };
 
 // Maximum output acceleration per joint (rad/s²)
@@ -113,7 +136,7 @@ static float max_speed_steps[NUM_JOINTS];
 static float max_accel_steps[NUM_JOINTS];
 
 // Debug / profiling helpers (ROS topic based, no Serial)
-static unsigned long last_debug_ms = 0;
+// Note: last_debug_ms is now local to ros_communications_task() to avoid cross-core access
 static long last_pos_debug[NUM_JOINTS];
 
 // Debug publisher for approximate joint velocities (rad/s)
@@ -131,12 +154,12 @@ static double joint_vel_debug_data[NUM_JOINTS];
 struct StepperMotor {
   uint8_t step_pin;
   uint8_t dir_pin;
-  long current_pos;
-  long target_pos;
+  volatile long current_pos;  // Written by Core 1 (updateStepper), read by Core 0 (feedback/debug)
+  volatile long target_pos;   // Written by Core 0 (subscription callback), read by Core 1 (updateStepper)
   float speed;          // current speed (steps/s, always >= 0)
   float max_speed;      // cap (steps/s)
   float accel;          // acceleration (steps/s^2)
-  unsigned long last_step_us;
+  unsigned long last_step_us;  // Unsigned subtraction handles micros() wrap-around (~71.6 min)
   int8_t dir;           // +1 forward, -1 reverse
 };
 
@@ -176,46 +199,67 @@ rcl_allocator_t allocator;
 rcl_node_t      node;
 rcl_timer_t     fb_timer;
 
+// FreeRTOS task handle for ROS communications (Core 0)
+TaskHandle_t RosTaskHandle;
+
 // Feedback publish rate (ms)
 #define FEEDBACK_PERIOD_MS 200
-
-// How often to let micro-ROS process (ms).
-// Between spin calls the steppers get a tight, uninterrupted loop.
-#define SPIN_PERIOD_MS 20
 
 // ─────────────────────────────────────────────
 //  Custom Stepper Motor Driver Implementation
 // ─────────────────────────────────────────────
 
-// Update one stepper motor (trapezoidal profile)
+// Update one stepper motor (braking-distance-aware trapezoidal profile)
 // Uses per-step displacement-based kinematics for loop-rate-independent behavior.
+// Handles mid-flight target changes gracefully by computing braking distance
+// and smoothly decelerating/reversing when needed.
 void updateStepper(StepperMotor& m) {
+  // Read target position (volatile - may be updated by Core 0)
+  volatile long target = m.target_pos;
+  volatile long current = m.current_pos;
+  
   // If at target, stop
-  if (m.current_pos == m.target_pos) {
+  if (current == target) {
     m.speed = 0.0;
     m.dir = 0;
     return;
   }
   
-  // Determine direction
-  long remaining = m.target_pos - m.current_pos;
-  int8_t new_dir = (remaining > 0) ? 1 : -1;
+  // Determine desired direction based on current target
+  long remaining = target - current;
+  int8_t desired_dir = (remaining > 0) ? 1 : -1;
+  long remaining_abs = abs(remaining);
   
-  // Update direction pin if changed (reset speed on reversal)
-  if (new_dir != m.dir) {
-    m.dir = new_dir;
-    m.speed = 0.0;  // Reset speed when direction changes
-    digitalWrite(m.dir_pin, (m.dir > 0) ? HIGH : LOW);
+  // Handle direction reversal: if moving wrong direction, decelerate first
+  if (m.dir != 0 && m.dir != desired_dir) {
+    // Moving in wrong direction - decelerate at max rate
+    // v² = v₀² - 2aΔx (decelerating)
+    float v_decel_reverse = sqrt(max(0.0f, m.speed * m.speed - 2.0f * m.accel));
+    m.speed = v_decel_reverse;
+    
+    // If speed drops to minimum, stop and let next iteration handle reversal
+    if (m.speed < 10.0) {
+      m.speed = 0.0;
+      m.dir = 0;
+      return;
+    }
+    // Continue stepping in current direction while decelerating
+  } else {
+    // Moving in correct direction (or stopped)
+    // Update direction pin if changed (only when starting or reversing)
+    if (m.dir != desired_dir) {
+      m.dir = desired_dir;
+      digitalWrite(m.dir_pin, (m.dir > 0) ? HIGH : LOW);
+      // Start at minimum speed when direction changes
+      if (m.speed < 10.0) {
+        m.speed = 10.0;
+      }
+    }
   }
   
-  // Minimum speed to avoid stalling (but only if we have somewhere to go)
-  if (m.speed < 10.0 && m.current_pos != m.target_pos) {
-    m.speed = 10.0;
-  }
-  
-  // If speed is still 0 (at target), don't try to step
-  if (m.speed <= 0.0) {
-    return;
+  // If speed is 0 and we're not at target, start moving
+  if (m.speed <= 0.0 && current != target) {
+    m.speed = 10.0;  // Minimum speed to avoid stalling
   }
   
   // Compute step interval from current speed
@@ -223,7 +267,8 @@ void updateStepper(StepperMotor& m) {
   
   // Check if it's time to step
   unsigned long now_us = micros();
-  unsigned long elapsed_us = now_us - m.last_step_us;  // Unsigned subtraction handles wrap-around
+  // Unsigned subtraction handles micros() wrap-around correctly (~71.6 min period)
+  unsigned long elapsed_us = now_us - m.last_step_us;
   
   if (elapsed_us >= step_interval_us) {
     // Pulse step pin (minimum 3us HIGH per CL42T/CL57T spec)
@@ -231,30 +276,57 @@ void updateStepper(StepperMotor& m) {
     delayMicroseconds(3);  // 3us is very short, acceptable blocking
     digitalWrite(m.step_pin, LOW);
     
-    // Update position
+    // Update position (volatile write - Core 0 reads this)
     m.current_pos += m.dir;
+    current = m.current_pos;  // Update local copy
     
     // Update last_step_us
     m.last_step_us = now_us;
     
-    // Compute new speed using displacement-based kinematics (per-step, not per-call)
-    // v² = v₀² + 2aΔx, where Δx = 1 step
-    // This naturally blends acceleration, cruise, and deceleration phases
-    long remaining_abs = abs(m.target_pos - m.current_pos);
+    // Re-read target in case it changed mid-step (volatile read)
+    target = m.target_pos;
+    remaining = target - current;
+    remaining_abs = abs(remaining);
     
-    // Speed after accelerating for 1 step: v² = v₀² + 2a
-    float v_accel = sqrt(m.speed * m.speed + 2.0f * m.accel);
+    // If we've reached target, stop
+    if (remaining_abs == 0) {
+      m.speed = 0.0;
+      m.dir = 0;
+      return;
+    }
     
-    // Maximum speed that can still stop in remaining distance: v² = 2ad
-    float v_decel = sqrt(2.0f * m.accel * (float)remaining_abs);
+    // Recompute desired direction (may have changed)
+    desired_dir = (remaining > 0) ? 1 : -1;
     
-    // Take minimum of: accelerated speed, max speed limit, and decel-limited speed
-    // This gives us: accelerate → cruise → decelerate profile
-    m.speed = min(min(v_accel, m.max_speed), v_decel);
+    // If moving in wrong direction, continue decelerating
+    if (m.dir != 0 && m.dir != desired_dir) {
+      float v_decel_reverse = sqrt(max(0.0f, m.speed * m.speed - 2.0f * m.accel));
+      m.speed = v_decel_reverse;
+      if (m.speed < 10.0) {
+        m.speed = 0.0;
+        m.dir = 0;
+      }
+      return;
+    }
     
-    // Ensure we don't go below minimum speed (unless at target)
-    if (m.speed < 10.0 && remaining_abs > 0) {
-      m.speed = 10.0;
+    // Moving in correct direction - compute braking distance
+    // d_brake = v² / (2a) - minimum distance needed to stop
+    float d_brake = (m.speed * m.speed) / (2.0f * m.accel);
+    
+    if (remaining_abs <= d_brake) {
+      // Within braking zone - decelerate to stop at target
+      // v² = 2ad, solve for v: v = sqrt(2ad)
+      m.speed = sqrt(2.0f * m.accel * (float)remaining_abs);
+      // Ensure minimum speed while still moving
+      if (m.speed < 10.0 && remaining_abs > 0) {
+        m.speed = 10.0;
+      }
+    } else {
+      // Outside braking zone - accelerate or cruise
+      // Speed after accelerating for 1 step: v² = v₀² + 2a
+      float v_accel = sqrt(m.speed * m.speed + 2.0f * m.accel);
+      // Cap at max speed
+      m.speed = min(v_accel, m.max_speed);
     }
   }
   // If not time to step yet, return without updating speed
@@ -272,6 +344,47 @@ void error_loop() {
   while (1) {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     delay(100);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  FreeRTOS Task: ROS Communications (Core 0)
+// ─────────────────────────────────────────────
+
+void ros_communications_task(void *pvParameters) {
+  (void)pvParameters;
+  
+  unsigned long last_debug_publish_ms = 0;
+  
+  for (;;) {
+    // Spin the micro-ROS executor - handles subscription callbacks and timer callbacks
+    // This processes incoming /joint_position_commands and triggers feedback_timer_callback
+    RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(0)));
+    
+    // Handle 1-second debug velocity publisher (moved from loop())
+    unsigned long now_ms = millis();
+    // Unsigned subtraction handles millis() wrap-around correctly (~49 days)
+    if (now_ms - last_debug_publish_ms >= 1000) {
+      last_debug_publish_ms = now_ms;
+      
+      for (int i = 0; i < NUM_JOINTS; i++) {
+        // Read current position (volatile - written by Core 1)
+        volatile long pos = motors[i].current_pos;
+        long delta = pos - last_pos_debug[i];
+        last_pos_debug[i] = pos;
+        
+        double rad_per_s = (steps_per_radian[i] > 0.0)
+                             ? ((double)delta / steps_per_radian[i])
+                             : 0.0;
+        joint_vel_debug_data[i] = rad_per_s;
+      }
+      
+      // Publish approximate velocities (rad/s) for all joints
+      RCSOFTCHECK(rcl_publish(&pub_joint_vel_debug, &msg_joint_vel_debug, NULL));
+    }
+    
+    // Yield to FreeRTOS scheduler
+    vTaskDelay(1);
   }
 }
 
@@ -427,6 +540,18 @@ void setup() {
       &executor, &sub_joint_cmd, &msg_joint_cmd,
       &joint_cmd_callback, ON_NEW_DATA));
   RCCHECK(rclc_executor_add_timer(&executor, &fb_timer));
+  
+  // --- Create FreeRTOS task for ROS communications on Core 0 ---
+  // This task handles all micro-ROS processing, leaving Core 1's loop()
+  // free for uninterrupted stepper motor control.
+  xTaskCreatePinnedToCore(
+      ros_communications_task,  // Task function
+      "ROS_Task",               // Task name
+      8192,                     // Stack size (bytes) - sufficient for micro-ROS serial I/O
+      NULL,                     // Parameters
+      1,                        // Priority (same as default Arduino loop)
+      &RosTaskHandle,           // Task handle
+      0);                       // Pin to Core 0
 }
 
 // ─────────────────────────────────────────────
@@ -434,50 +559,27 @@ void setup() {
 // ─────────────────────────────────────────────
 
 void loop() {
-  // ── Tight stepping — runs every iteration, no micro-ROS overhead ──
-  bool any_moving = false;
+  // ── Core 1: Tight stepper control loop — zero blocking, no micro-ROS overhead ──
+  // All micro-ROS processing (subscription, feedback publishing, debug publishing)
+  // is handled by ros_communications_task() on Core 0.
+  
+  // Update all 6 stepper motors
   for (int i = 0; i < NUM_JOINTS; i++) {
     updateStepper(motors[i]);
-    if (motors[i].current_pos != motors[i].target_pos) {
-      any_moving = true;
-    }
-  }
-
-  // ── Throttled micro-ROS processing ──
-  unsigned long now_ms = millis();
-  static unsigned long last_spin = 0;
-  if (now_ms - last_spin >= SPIN_PERIOD_MS) {
-    last_spin = now_ms;
-    RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(0)));
   }
 
   // ── LED: turn off when all joints have reached their targets ──
   bool all_arrived = true;
   for (int i = 0; i < NUM_JOINTS; i++) {
-    if (motors[i].target_pos != motors[i].current_pos) {
+    // Read target and current positions (volatile - may be updated by Core 0)
+    volatile long target = motors[i].target_pos;
+    volatile long current = motors[i].current_pos;
+    if (target != current) {
       all_arrived = false;
       break;
     }
   }
   if (all_arrived && digitalRead(LED_PIN) == HIGH) {
     digitalWrite(LED_PIN, LOW);
-  }
-
-  // ── Debug: estimate effective speed once per second ──
-  if (now_ms - last_debug_ms >= 1000) {
-    last_debug_ms = now_ms;
-    for (int i = 0; i < NUM_JOINTS; i++) {
-      long pos = motors[i].current_pos;
-      long delta = pos - last_pos_debug[i];
-      last_pos_debug[i] = pos;
-
-      double rad_per_s = (steps_per_radian[i] > 0.0)
-                           ? ((double)delta / steps_per_radian[i])
-                           : 0.0;
-      joint_vel_debug_data[i] = rad_per_s;
-    }
-
-    // Publish approximate velocities (rad/s) for all joints
-    RCSOFTCHECK(rcl_publish(&pub_joint_vel_debug, &msg_joint_vel_debug, NULL));
   }
 }

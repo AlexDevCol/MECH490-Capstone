@@ -56,7 +56,7 @@ static const float steps_per_rev[NUM_JOINTS] = {
 
 // Gear ratio — motor revolutions per output revolution
 static const float gear_ratio[NUM_JOINTS] = {
-  19.0, 19.0, 19.0, 19.0, 19.0, 19.0
+  23.0, 23.0, 19.0, 19.0, 5.0, 1.0
 };
 
 // ─────────────────────────────────────────────
@@ -70,7 +70,7 @@ static const float max_velocity_rad[NUM_JOINTS] = {
 
 // Maximum output acceleration per joint (rad/s²)
 static const float max_accel_rad[NUM_JOINTS] = {
-  2.4, 2.4, 2.4, 2.4, 2.4, 2.4
+  2.4, 0.7, 2.4, 2.4, 2.4, 2.4
 };
 
 // ─────────────────────────────────────────────
@@ -197,66 +197,137 @@ static unsigned long max_loop_time_us = 0;
 static unsigned long total_loop_time_us = 0;
 static unsigned long loop_samples = 0;
 
+// State machine for non-blocking status printing
+enum PrintState {
+  PRINT_IDLE,
+  PRINT_HEADER,
+  PRINT_LOOP_STATS,
+  PRINT_TABLE_HEADER,
+  PRINT_MOTOR_LINE,
+  PRINT_FOOTER
+};
+static PrintState print_state = PRINT_IDLE;
+
+static int print_motor_index = 0;
+static unsigned long print_start_ms = 0;
+static unsigned long print_elapsed_ms = 0;
+static unsigned long print_loop_iterations = 0;
+static unsigned long print_avg_loop_time = 0;
+static unsigned long print_max_loop_time = 0;
+static long print_motor_positions[NUM_JOINTS];
+static long print_motor_deltas[NUM_JOINTS];
+static long print_motor_targets[NUM_JOINTS];
+
 void printStatus() {
   unsigned long now_ms = millis();
-  unsigned long elapsed_ms = now_ms - last_debug_ms;
   
-  if (elapsed_ms < 1000) return;  // Print every 1 second
-  
-  Serial.println("\n=== Stepper Status ===");
-  Serial.print("Loop iterations/sec: ");
-  Serial.println(loop_count - last_loop_count);
-  Serial.print("Avg loop time (us): ");
-  if (loop_samples > 0) {
-    Serial.println(total_loop_time_us / loop_samples);
-  } else {
-    Serial.println("N/A");
-  }
-  Serial.print("Max loop time (us): ");
-  Serial.println(max_loop_time_us);
-  Serial.println();
-  
-  Serial.println("Motor | Position (steps) | Speed (steps/s) | Speed (rad/s) | Target (steps) | Status");
-  Serial.println("------|-------------------|-----------------|---------------|----------------|--------");
-  
-  for (int i = 0; i < NUM_JOINTS; i++) {
-    long pos = motors[i].current_pos;
-    long delta = pos - last_pos_debug[i];
-    last_pos_debug[i] = pos;
+  // Check if it's time to start a new status print cycle
+  if (print_state == PRINT_IDLE) {
+    unsigned long elapsed_ms = now_ms - last_debug_ms;
+    if (elapsed_ms < 1000) return;  // Print every 1 second
     
-    float steps_per_s = (elapsed_ms > 0) ? ((float)delta * 1000.0f / (float)elapsed_ms) : 0.0f;
-    float rad_per_s = (steps_per_radian[i] > 0.0) ? (steps_per_s / steps_per_radian[i]) : 0.0f;
+    // Start new print cycle - capture snapshot of data
+    print_start_ms = now_ms;
+    print_elapsed_ms = elapsed_ms;
+    print_loop_iterations = loop_count - last_loop_count;
+    print_avg_loop_time = (loop_samples > 0) ? (total_loop_time_us / loop_samples) : 0;
+    print_max_loop_time = max_loop_time_us;
     
-    Serial.print("  ");
-    Serial.print(i + 1);
-    Serial.print("   | ");
-    Serial.print(pos);
-    Serial.print("              | ");
-    Serial.print(steps_per_s, 1);
-    Serial.print("            | ");
-    Serial.print(rad_per_s, 3);
-    Serial.print("          | ");
-    Serial.print(motors[i].target_pos);
-    Serial.print("            | ");
-    
-    if (motors[i].current_pos == motors[i].target_pos) {
-      Serial.println("IDLE");
-    } else {
-      Serial.println("MOVING");
+    // Capture position snapshots and calculate deltas BEFORE updating last_pos_debug
+    for (int i = 0; i < NUM_JOINTS; i++) {
+      print_motor_positions[i] = motors[i].current_pos;
+      print_motor_deltas[i] = print_motor_positions[i] - last_pos_debug[i];
+      print_motor_targets[i] = motors[i].target_pos;
+      last_pos_debug[i] = print_motor_positions[i];  // Update for next cycle
     }
+    
+    // Reset counters for next cycle
+    last_debug_ms = now_ms;
+    last_loop_count = loop_count;
+    max_loop_time_us = 0;
+    total_loop_time_us = 0;
+    loop_samples = 0;
+    
+    // Start printing
+    print_state = PRINT_HEADER;
+    print_motor_index = 0;
   }
   
-  Serial.println();
-  Serial.println("Commands: '1'=motor1, '4'=motor4, '1,4'=motors1+4, 'all'=all motors, 'r'=reset all");
-  Serial.println("Send angle in degrees (e.g., '1 90' moves motor 1 to 90 degrees)");
-  Serial.println();
-  
-  // Reset counters
-  last_debug_ms = now_ms;
-  last_loop_count = loop_count;
-  max_loop_time_us = 0;
-  total_loop_time_us = 0;
-  loop_samples = 0;
+  // State machine: print one line per call to avoid blocking
+  switch (print_state) {
+    case PRINT_HEADER:
+      Serial.println("\n=== Stepper Status ===");
+      print_state = PRINT_LOOP_STATS;
+      break;
+      
+    case PRINT_LOOP_STATS:
+      Serial.print("Loop iterations/sec: ");
+      Serial.println(print_loop_iterations);
+      Serial.print("Avg loop time (us): ");
+      if (print_avg_loop_time > 0) {
+        Serial.println(print_avg_loop_time);
+      } else {
+        Serial.println("N/A");
+      }
+      Serial.print("Max loop time (us): ");
+      Serial.println(print_max_loop_time);
+      Serial.println();
+      print_state = PRINT_TABLE_HEADER;
+      break;
+      
+    case PRINT_TABLE_HEADER:
+      Serial.println("Motor | Position (steps) | Speed (steps/s) | Speed (rad/s) | Target (steps) | Status");
+      Serial.println("------|-------------------|-----------------|---------------|----------------|--------");
+      print_state = PRINT_MOTOR_LINE;
+      break;
+      
+    case PRINT_MOTOR_LINE:
+      // Print one motor line per call
+      if (print_motor_index < NUM_JOINTS) {
+        int i = print_motor_index;
+        long pos = print_motor_positions[i];
+        long delta = print_motor_deltas[i];
+        
+        float steps_per_s = (print_elapsed_ms > 0) ? ((float)delta * 1000.0f / (float)print_elapsed_ms) : 0.0f;
+        float rad_per_s = (steps_per_radian[i] > 0.0) ? (steps_per_s / steps_per_radian[i]) : 0.0f;
+        
+        Serial.print("  ");
+        Serial.print(i + 1);
+        Serial.print("   | ");
+        Serial.print(pos);
+        Serial.print("              | ");
+        Serial.print(steps_per_s, 1);
+        Serial.print("            | ");
+        Serial.print(rad_per_s, 3);
+        Serial.print("          | ");
+        Serial.print(print_motor_targets[i]);
+        Serial.print("            | ");
+        
+        if (pos == print_motor_targets[i]) {
+          Serial.println("IDLE");
+        } else {
+          Serial.println("MOVING");
+        }
+        
+        print_motor_index++;
+      } else {
+        // All motors printed, move to footer
+        print_state = PRINT_FOOTER;
+      }
+      break;
+      
+    case PRINT_FOOTER:
+      Serial.println();
+      Serial.println("Commands: '1'=motor1, '4'=motor4, '1,4'=motors1+4, 'all'=all motors, 'r'=reset all");
+      Serial.println("Send angle in degrees (e.g., '1 90' moves motor 1 to 90 degrees)");
+      Serial.println();
+      print_state = PRINT_IDLE;  // Done, reset for next cycle
+      break;
+      
+    case PRINT_IDLE:
+    default:
+      break;
+  }
 }
 
 void parseCommand(String cmd) {
