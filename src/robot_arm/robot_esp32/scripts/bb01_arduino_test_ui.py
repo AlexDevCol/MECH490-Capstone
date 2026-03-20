@@ -40,17 +40,134 @@ class App:
         self.fb_gripper_var = tk.StringVar(value="--")
         self.status_var = tk.StringVar(value="Disconnected")
 
+        # UI state: Serial log accordion.
+        self.serial_log_visible = False
+        self.log_frame: ttk.LabelFrame | None = None
+        self.serial_toggle_btn: ttk.Button | None = None
+
         self._build()
         self.refresh_ports()
 
+    def _apply_style(self) -> None:
+        """Apply a cohesive light theme (Tkinter/ttk only)."""
+        try:
+            style = ttk.Style(self.root)
+            # 'clam' gives better color control than 'default' on Windows.
+            style.theme_use("clam")
+        except tk.TclError:
+            return
+
+        # Palette (light, but still high-contrast).
+        bg_main = "#F3F4F6"   # light grey background
+        panel = "#FFFFFF"     # panels
+        panel2 = "#EEF2F7"   # inputs / secondary surfaces
+        border = "#D1D5DB"   # subtle borders
+        fg = "#111827"        # near-black text
+        fg_muted = "#6B7280"  # muted labels
+        accent = "#F97316"   # orange accents
+        accent2 = "#F59E0B"  # secondary orange
+        danger = "#EF4444"   # errors
+
+        # Expose a few palette values for later widget configuration.
+        self.accent = accent
+        self.fg = fg
+        self.panel = panel
+        self.panel2 = panel2
+        self.bg_main = bg_main
+
+        self.root.configure(background=bg_main)
+
+        # ttk base widgets.
+        style.configure("TFrame", background=bg_main)
+        style.configure("TLabel", background=bg_main, foreground=fg)
+        style.configure("TLabelframe", background=panel, bordercolor=border, padding=6)
+        style.configure(
+            "TLabelframe.Label",
+            background=panel,
+            foreground=fg,
+            font=("Segoe UI", 10, "bold"),
+        )
+        style.configure(
+            "TEntry",
+            fieldbackground=panel2,
+            foreground=fg,
+            insertcolor=fg,
+            bordercolor=border,
+        )
+        style.configure(
+            "TCombobox",
+            fieldbackground=panel2,
+            foreground=fg,
+            bordercolor=border,
+        )
+
+        # Default button tuning (darker grey buttons).
+        btn_bg = "#E5E7EB"
+        btn_fg = "#111827"
+        btn_active = "#D1D5DB"
+        btn_disabled = "#F3F4F6"
+        style.configure(
+            "TButton",
+            padding=(12, 8),
+            font=("Segoe UI", 10),
+            background=btn_bg,
+            foreground=btn_fg,
+            bordercolor=border,
+        )
+        style.map(
+            "TButton",
+            background=[
+                ("active", btn_active),
+                ("disabled", btn_disabled),
+            ],
+            foreground=[
+                ("active", btn_fg),
+                ("disabled", fg_muted),
+            ],
+        )
+
+        # Accent button (used for the main Send action).
+        style.configure(
+            "AccentLarge.TButton",
+            background=accent,
+            foreground="white",
+            padding=(18, 12),
+            font=("Segoe UI", 12, "bold"),
+        )
+        style.map(
+            "AccentLarge.TButton",
+            background=[("active", "#EA580C")],
+            foreground=[("active", "white")],
+        )
+
+        # Accordion toggle styling.
+        style.configure(
+            "Ghost.TButton",
+            background=panel,
+            foreground=fg_muted,
+            padding=(10, 6),
+            font=("Segoe UI", 10, "bold"),
+            bordercolor=border,
+        )
+        style.map(
+            "Ghost.TButton",
+            background=[("active", panel2)],
+            foreground=[("active", fg)],
+        )
+
+        # Add log widget styling (ScrolledText uses tk.Text under the hood).
+        # We apply these later once the widget exists.
+
     def _build(self):
+        self._apply_style()
+
         main = ttk.Frame(self.root, padding=10)
         main.pack(fill="both", expand=True)
 
         conn = ttk.LabelFrame(main, text="Serial", padding=8)
         conn.pack(fill="x", pady=(0, 6))
 
-        self.port_var = tk.StringVar()
+        self.port_var = tk.StringVar(value="COM3")
         ttk.Label(conn, text="Port").grid(row=0, column=0, padx=4)
         self.port_combo = ttk.Combobox(
             conn, textvariable=self.port_var, width=20, state="readonly"
@@ -118,10 +235,11 @@ class App:
             side="left", padx=3
         )
         self.btn_send = ttk.Button(
-            cmd, text="Send", command=self.send, state="disabled"
+            cmd, text="Send", command=self.send, state="disabled", style="AccentLarge.TButton"
         )
-        self.btn_send.grid(row=6, column=0, pady=8, sticky="w")
+        self.btn_send.grid(row=6, column=0, columnspan=5, pady=(12, 8), sticky="ew")
         cmd.columnconfigure(3, weight=1)
+        cmd.columnconfigure(1, weight=1)
 
         fb = ttk.LabelFrame(main, text="Feedback (from fb,... lines)", padding=8)
         fb.pack(fill="x", pady=(0, 10))
@@ -145,22 +263,77 @@ class App:
             row=1, column=4, padx=6, sticky="w"
         )
 
+        # Serial log accordion (toggleable).
+        serial_header = ttk.Frame(main)
+        serial_header.pack(fill="x", pady=(0, 6))
+
+        toggle_text = (
+            "Serial Monitor (hide)" if self.serial_log_visible else "Serial Monitor (show)"
+        )
+        self.serial_toggle_btn = ttk.Button(
+            serial_header,
+            text=toggle_text,
+            command=self.toggle_serial_monitor,
+            style="Ghost.TButton",
+        )
+        self.serial_toggle_btn.pack(side="left")
+
+        serial_hint = ttk.Label(
+            serial_header,
+            text="RX/TX details",
+            foreground=getattr(self, "fg_muted", "#6B7280"),
+        )
+        serial_hint.pack(side="left", padx=(10, 0))
+
         logf = ttk.LabelFrame(main, text="Serial log", padding=8)
+        self.log_frame = logf
         logf.pack(fill="both", expand=True)
-        self.log = ScrolledText(logf, state="disabled")
+        if not self.serial_log_visible:
+            logf.pack_forget()
+
+        self.log = ScrolledText(logf, state="disabled", height=10)
         self.log.pack(fill="both", expand=True)
+
+        # Apply styling to the underlying tk.Text.
+        self.log.configure(
+            background="#FFFFFF",
+            foreground=getattr(self, "fg", "#111827"),
+            insertbackground=getattr(self, "accent", "#F97316"),
+            selectbackground="#FFE1C2",
+            relief="flat",
+            borderwidth=0,
+        )
+        # Slightly reduce glare: disable default scrollbar step-by-step colors.
 
     def _set_gripper(self, value: int):
         self.gripper_scale.set(value)
         self.gripper_label.set(str(value))
 
+    def toggle_serial_monitor(self) -> None:
+        """Accordion toggle for the Serial log panel."""
+        if not self.log_frame or not self.serial_toggle_btn:
+            return
+
+        if self.serial_log_visible:
+            self.log_frame.pack_forget()
+            self.serial_log_visible = False
+            self.serial_toggle_btn.configure(text="Serial Monitor (show)")
+        else:
+            self.log_frame.pack(fill="both", expand=True)
+            self.serial_log_visible = True
+            self.serial_toggle_btn.configure(text="Serial Monitor (hide)")
+
     def refresh_ports(self):
         ports = [p.device for p in list_ports.comports()]
         self.port_combo["values"] = ports
         if ports:
-            self.port_var.set(ports[0])
+            # Prefer COM3 by default (requested), otherwise pick the first detected port.
+            if "COM3" in ports:
+                self.port_var.set("COM3")
+            else:
+                self.port_var.set(ports[0])
         else:
-            self.port_var.set("")
+            self.port_var.set("COM3")
 
     def _append_log(self, text: str):
         self.log.configure(state="normal")

@@ -64,16 +64,20 @@ static const float steps_per_rev[NUM_JOINTS] = {
   800.0, 800.0, 800.0, 800.0, 800.0, 800.0
 };
 
+// Gear ratio — motor revolutions per output revolution
 static const float gear_ratio[NUM_JOINTS] = {
-  23.0, 23.0, 19.0, 19.0, 5.0, 1.0
+  23.0, 29.0, 23.0, 19.0, 5.0, 1.0
 };
 
+// Maximum output velocity per joint (rad/s)
+// Enforced by per-step kinematic speed updates.
 static const float max_velocity_rad[NUM_JOINTS] = {
-  0.3, 0.15, 0.3, 0.3, 0.3, 0.3
+  0.4, 0.15, 0.2, 0.4, 0.5, 0.5
 };
 
+// Maximum output acceleration per joint (rad/s²)
 static const float max_accel_rad[NUM_JOINTS] = {
-  2.4, 0.7, 2.4, 2.4, 2.4, 2.4
+  1.0, 0.25, 0.4, 1.0, 1.5, 2.0
 };
 
 static float steps_per_radian[NUM_JOINTS];
