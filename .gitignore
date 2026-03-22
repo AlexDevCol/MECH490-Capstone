@@ -1,19 +1,26 @@
 # Ignore everything by default
 *
 
-# But don't ignore the src folder and its contents
+# Keep source and project assets tracked
 !assets/
 !assets/**
 !src/
 !src/**
 !docs/
 !docs/**
+!scripts/
+!scripts/**
+!run_script.sh
+!test_run.sh
 
 # Don't ignore this .gitignore file
 !.gitignore
 
-# Don't ignore README.md if it exists
+# Keep documentation files tracked
 !README.md
-
-# Don't ignore any other important documentation files
 !*.md
+
+# Keep generated ROS workspace outputs ignored
+build/
+install/
+log/

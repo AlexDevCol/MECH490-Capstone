@@ -11,7 +11,7 @@
 
 // --- Configuration ---
 #define LED_PIN 2      // Use a separate pin for LED status (e.g., GPIO 2)
-#define SERVO_PIN 13   // The pin connected to the servo signal wire (PWM Pin)
+#define SERVO_PIN 4   // The pin connected to the servo signal wire (PWM Pin)
 #define ROS_TOPIC_NAME "servo_angle"
 
 // --- Global ROS Objects ---
