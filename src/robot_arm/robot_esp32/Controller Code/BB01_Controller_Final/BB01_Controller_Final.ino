@@ -133,12 +133,12 @@
  // Maximum output velocity per joint (rad/s)
  // Enforced by per-step kinematic speed updates.
  static const float max_velocity_rad[NUM_JOINTS] = {
-   0.3, 0.15, 0.2, 0.4, 0.5, 0.5
+   0.2, 0.15, 0.2, 0.4, 0.5, 0.5
  };
  
  // Maximum output acceleration per joint (rad/s²)
  static const float max_accel_rad[NUM_JOINTS] = {
-   1.0, 0.25, 0.4, 1.0, 1.5, 2.0
+   0.5, 0.25, 0.4, 1.0, 1.5, 2.0
  };
  
  // ─────────────────────────────────────────────
