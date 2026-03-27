@@ -108,11 +108,16 @@
    -90.0, -90.0, -90.0, -90.0, -90.0, -90.0
  };
  
- static const float joint_max_deg[NUM_JOINTS] = {
-   90.0, 90.0, 90.0, 90.0, 90.0, 90.0
- };
- 
- // Steps per motor revolution (driver microstep setting)
+static const float joint_max_deg[NUM_JOINTS] = {
+  90.0, 90.0, 90.0, 90.0, 90.0, 90.0
+};
+
+// Gripper servo limits (degrees) — [min, max]
+static const float gripper_limit_deg[2] = {
+  45.0f, 135.0f
+};
+
+// Steps per motor revolution (driver microstep setting)
  static const float steps_per_rev[NUM_JOINTS] = {
    800.0, 800.0, 800.0, 800.0, 800.0, 800.0
  };
@@ -211,11 +216,13 @@
  #define SERVO_DUTY_MIN 409
  #define SERVO_DUTY_MAX 1966
  
- void setGripperAngle(int angle) {
-   if (angle < 0) angle = 0;
-   if (angle > 180) angle = 180;
- 
-   uint32_t duty = map(angle, 0, 180, SERVO_DUTY_MIN, SERVO_DUTY_MAX);
+void setGripperAngle(int angle) {
+  int lo = (int)gripper_limit_deg[0];
+  int hi = (int)gripper_limit_deg[1];
+  if (angle < lo) angle = lo;
+  if (angle > hi) angle = hi;
+
+  uint32_t duty = map(angle, 0, 180, SERVO_DUTY_MIN, SERVO_DUTY_MAX);
  
  #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
    ledcWrite(SERVO_PIN, duty);
@@ -491,13 +498,14 @@
    const std_msgs__msg__Int32 *msg =
        (const std_msgs__msg__Int32 *)msgin;
  
-   // Clamp angle to valid servo range (0-180 degrees)
-   int angle = msg->data;
-   if (angle < 0) angle = 0;
-   if (angle > 180) angle = 180;
- 
-   // Set volatile target (Core 1 will read this and actuate)
-   gripper_target_angle = angle;
+  int angle = msg->data;
+  int lo = (int)gripper_limit_deg[0];
+  int hi = (int)gripper_limit_deg[1];
+  if (angle < lo) angle = lo;
+  if (angle > hi) angle = hi;
+
+  // Set volatile target (Core 1 will read this and actuate)
+  gripper_target_angle = angle;
  }
  
  // ─────────────────────────────────────────────
