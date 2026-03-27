@@ -53,7 +53,6 @@
  
  #include <std_msgs/msg/float64_multi_array.h>
  #include <std_msgs/msg/int32.h>
- #include <ESP32Servo.h>
  
  // ─────────────────────────────────────────────
  //  Pin Definitions (from BB01 schematic)
@@ -200,9 +199,30 @@
  // Initial gripper position (degrees, 0-180)
  #define GRIPPER_INITIAL_ANGLE 90
  
- Servo gripper;
  // Volatile target angle set by Core 0 (ROS callback), read by Core 1 (loop())
  volatile int gripper_target_angle = GRIPPER_INITIAL_ANGLE;
+ 
+ // --- Native ESP32 LEDC Servo Driver ---
+ #define SERVO_FREQ 50
+ #define SERVO_RES_BITS 14
+ #define SERVO_CHANNEL 0
+ 
+ // Duty cycle limits mapped to 14-bit (0-16383) for 500us to 2400us pulses
+ #define SERVO_DUTY_MIN 409
+ #define SERVO_DUTY_MAX 1966
+ 
+ void setGripperAngle(int angle) {
+   if (angle < 0) angle = 0;
+   if (angle > 180) angle = 180;
+ 
+   uint32_t duty = map(angle, 0, 180, SERVO_DUTY_MIN, SERVO_DUTY_MAX);
+ 
+ #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+   ledcWrite(SERVO_PIN, duty);
+ #else
+   ledcWrite(SERVO_CHANNEL, duty);
+ #endif
+ }
  
  // ─────────────────────────────────────────────
  //  micro-ROS objects
@@ -556,13 +576,15 @@
      motors[i].dir = 0;
    }
  
-   // --- Configure servo ---
-   ESP32PWM::allocateTimer(0);
-   ESP32PWM::allocateTimer(1);
-   ESP32PWM::allocateTimer(2);
-   ESP32PWM::allocateTimer(3);
-   gripper.attach(SERVO_PIN, 500, 2400);
-   gripper.write(GRIPPER_INITIAL_ANGLE);  // Initialize to default position
+   // --- Configure servo (Native LEDC) ---
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+   ledcAttach(SERVO_PIN, SERVO_FREQ, SERVO_RES_BITS);
+#else
+   ledcSetup(SERVO_CHANNEL, SERVO_FREQ, SERVO_RES_BITS);
+   ledcAttachPin(SERVO_PIN, SERVO_CHANNEL);
+#endif
+
+   setGripperAngle(GRIPPER_INITIAL_ANGLE);
  
    // Allow hardware to stabilise before micro-ROS init
    delay(2000);
@@ -667,7 +689,7 @@
    static int last_gripper_angle = -1;  // Track last set angle to avoid redundant writes
    volatile int gripper_target = gripper_target_angle;  // Read volatile variable (set by Core 0)
    if (gripper_target != last_gripper_angle) {
-     gripper.write(gripper_target);
+     setGripperAngle(gripper_target);
      last_gripper_angle = gripper_target;
    }
  
