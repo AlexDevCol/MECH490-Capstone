@@ -119,7 +119,7 @@
  
  // Gear ratio — motor revolutions per output revolution
  static const float gear_ratio[NUM_JOINTS] = {
-   23.0, 29.0, 23.0, 5.0, 5.0, 1.0
+   23.0, 29.0, 23.0, 19.0, 5.0, 1.0
  };
  
  // ─────────────────────────────────────────────
