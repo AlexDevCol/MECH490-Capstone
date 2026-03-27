@@ -43,7 +43,8 @@ echo " Serial Port: $PORT"
 echo "============================================"
 
 # Step 1: Launch micro-ROS agent
-echo "[1/2] Launching micro-ROS agent..."
+echo "[1/2] Launching 
+-ROS agent..."
 ros2 run micro_ros_agent micro_ros_agent serial --dev "$PORT" --baudrate 115200 &
 AGENT_PID=$!
 
