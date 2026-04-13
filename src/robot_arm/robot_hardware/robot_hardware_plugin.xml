@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<library path="robot_hardware">
+  <class name="robot_hardware/TopicBasedSystem" type="robot_hardware::TopicBasedSystem" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Topic-based hardware interface that communicates with ESP32 via Float64MultiArray topics.
+      Publishes joint position commands and subscribes to joint position feedback.
+    </description>
+  </class>
+</library>

@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
+find_package(moveit_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -47,10 +48,31 @@ ament_target_dependencies(hello_moveit
   control_msgs
 )
 
+add_executable(joy_to_servo_node src/joy_to_servo_node.cpp)
+ament_target_dependencies(joy_to_servo_node
+  rclcpp
+  geometry_msgs
+  std_msgs
+  sensor_msgs
+  control_msgs
+  moveit_msgs
+)
+
+add_executable(keyboard_servo_node src/keyboard_servo_node.cpp)
+ament_target_dependencies(keyboard_servo_node
+  rclcpp
+  geometry_msgs
+  std_msgs
+  control_msgs
+  moveit_msgs
+)
+
 install(TARGETS
   simple_moveit_interface
   position_moveit_interface
   hello_moveit
+  joy_to_servo_node
+  keyboard_servo_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

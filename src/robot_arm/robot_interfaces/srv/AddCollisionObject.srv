@@ -1,0 +1,8 @@
+# Request
+robot_interfaces/DetectedObject object_to_add    # The object details from Gemini/Coordinator
+string desired_frame_id                         # Target MoveIt frame (e.g., "base_link", "world")
+string object_id                                # Unique ID for this collision object
+---
+# Response
+bool success                                    # True if object added successfully
+string message  

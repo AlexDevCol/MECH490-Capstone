@@ -1,0 +1,68 @@
+###############################################
+# MoveIt Servo Configuration for bb01
+# Adapted from panda_simulated_config.yaml
+###############################################
+
+## Properties of outgoing commands
+publish_period: 0.01  # 1/Nominal publish rate [seconds] (100 Hz)
+max_expected_latency: 0.1  # delay between sending a command and the robot executing it [seconds]
+
+# Use "unitless" for joystick-style input in range [-1:1]
+command_in_type: "unitless"  # "unitless" or "speed_units"
+
+scale:
+  # Scale parameters are only used if command_in_type=="unitless"
+  linear: 0.2  # Max linear velocity scaling factor. Unit is [m/s] when used with speed_units.
+  rotational: 0.4  # Max angular velocity scaling factor. Unit is [rad/s] when used with speed_units.
+  joint: 0.3  # Max joint angular/linear velocity scaling. Only used for joint commands.
+
+# What type of topic does your robot driver expect?
+# Currently supported are std_msgs/Float64MultiArray or trajectory_msgs/JointTrajectory
+command_out_type: trajectory_msgs/JointTrajectory
+
+# What to publish? Can save some bandwidth as most robots only require positions or velocities
+publish_joint_positions: true
+publish_joint_velocities: true
+publish_joint_accelerations: false
+
+## Plugins for smoothing outgoing commands
+use_smoothing: true
+smoothing_filter_plugin_name: "online_signal_smoothing::AccelerationLimitedPlugin"
+
+# If is_primary_planning_scene_monitor is set to true, the Servo server's PlanningScene advertises the /get_planning_scene service,
+# which other nodes can use as a source for information about the planning environment.
+# NOTE: Since move_group is already running as the primary planning scene monitor, set this to false.
+is_primary_planning_scene_monitor: false
+check_octomap_collisions: false  # Check collision against the octomap (if a 3D sensor plugin is available)
+
+## MoveIt properties
+move_group_name: arm  # bb01's planning group is "arm"
+
+## Configure handling of singularities and joint limits
+# bb01's candle pose (all-zeros) is a deep singularity because joints 2/3/4/6 share axes.
+# These thresholds are set very high to allow operation near (but not at) singular poses.
+# The initial pose has been changed to a bent configuration to help, but these high
+# thresholds provide an additional safety net.
+lower_singularity_threshold: 500.0  # Start decelerating when the condition number hits this (close to singularity)
+hard_stop_singularity_threshold: 1000.0  # Stop when the condition number hits this
+leaving_singularity_threshold_multiplier: 2.0  # Multiply the hard stop limit by this when leaving singularity
+# Added as a buffer to joint variable position bounds [in that joint variable's respective units].
+# Can be of size 1, which applies the margin to all joints, or the same size as the number of degrees of freedom of the active joint group.
+# If moving quickly, make these values larger.
+joint_limit_margins: [0.1]  # Conservative margin for bb01's ±π/2 joint limits
+
+## Topic names
+cartesian_command_in_topic: ~/delta_twist_cmds  # Topic for incoming Cartesian twist commands
+joint_command_in_topic: ~/delta_joint_cmds  # Topic for incoming joint angle commands
+joint_topic: /joint_states  # Get joint states from this topic
+status_topic: ~/status  # Publish status to this topic
+command_out_topic: /arm_controller/joint_trajectory  # Publish outgoing commands here (bb01's controller)
+
+## Collision checking for the entire robot body
+check_collisions: true  # Check collisions?
+collision_check_rate: 10.0  # [Hz] Collision-checking can easily bog down a CPU if done too often.
+self_collision_proximity_threshold: 0.01  # Start decelerating when a self-collision is this far [m]
+scene_collision_proximity_threshold: 0.02  # Start decelerating when a scene collision is this far [m]
+
+## Incoming command timeout
+incoming_command_timeout: 0.1  # Commands will be discarded if they are older than this timeout [seconds]

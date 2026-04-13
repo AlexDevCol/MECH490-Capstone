@@ -1,0 +1,11 @@
+# Goal definition (can be empty for now, or add params later)
+# Example: string prompt # Optional prompt to send to Gemini
+# Example: sensor_msgs/Image image # Optional image data if not handled internally
+---
+# Result definition
+robot_interfaces/ObjectList detected_objects
+bool success # Indicate if the detection process was successful
+string message # Optional status message (e.g., error details or success summary)
+---
+# Feedback definition (optional, useful for long processes)
+string status # e.g., "Calling API", "Processing results"
